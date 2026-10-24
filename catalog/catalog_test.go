@@ -1,9 +1,11 @@
 package catalog
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -167,5 +169,30 @@ func TestOptionValuesAcceptNumbers(t *testing.T) {
 	}
 	if f.Options[0].Value != "1" || f.Options[1].Value != "true" {
 		t.Fatalf("options = %+v", f.Options)
+	}
+}
+
+// An interrupted clone leaves .git without a commit; Sync starts over.
+func TestSyncRecoversFromBrokenCheckout(t *testing.T) {
+	src := writeCatalog(t, map[string]string{
+		"web/manifest.json":      `{"name":"Web","available":true}`,
+		"web/docker-compose.yml": compose,
+	})
+	for _, args := range [][]string{{"init", "-q"}, {"add", "."}, {"-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "init"}} {
+		if out, err := exec.Command("git", append([]string{"-C", src}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", args, out)
+		}
+	}
+	dir := filepath.Join(t.TempDir(), "catalog")
+	if err := os.MkdirAll(filepath.Join(dir, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	os.WriteFile(filepath.Join(dir, ".git", "shallow.lock"), nil, 0o644)
+	c := New(dir, "file://"+src)
+	if err := c.Sync(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	if c.Len() != 1 {
+		t.Fatalf("Len = %d", c.Len())
 	}
 }

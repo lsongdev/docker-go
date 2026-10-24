@@ -97,11 +97,13 @@ func (c *Catalog) Sync(ctx context.Context, out func(string)) error {
 	if c.repo == "" {
 		return c.Load()
 	}
-	if _, err := os.Stat(filepath.Join(c.dir, ".git")); err == nil {
+	if c.checkedOut(ctx) {
 		if err := git(ctx, out, "-C", c.dir, "pull", "--ff-only", "--depth", "1"); err != nil {
 			return err
 		}
 	} else {
+		// No checkout, or one an interrupted clone left without a commit:
+		// start over.
 		if err := os.MkdirAll(filepath.Dir(c.dir), 0o755); err != nil {
 			return err
 		}
@@ -119,6 +121,14 @@ func (c *Catalog) Sync(ctx context.Context, out func(string)) error {
 		out(fmt.Sprintf("Loaded %d apps", c.Len()))
 	}
 	return nil
+}
+
+// checkedOut reports whether dir holds a git checkout with a commit.
+func (c *Catalog) checkedOut(ctx context.Context) bool {
+	if _, err := os.Stat(filepath.Join(c.dir, ".git")); err != nil {
+		return false
+	}
+	return exec.CommandContext(ctx, "git", "-C", c.dir, "rev-parse", "--verify", "--quiet", "HEAD").Run() == nil
 }
 
 func git(ctx context.Context, out func(string), args ...string) error {
