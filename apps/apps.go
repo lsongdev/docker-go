@@ -6,7 +6,7 @@
 //	<root>/<id>/runtime.compose.yaml  resources templates expect the host
 //	                          to provide (merged after compose.yaml)
 //	<root>/<id>/.env          every variable the template needs
-//	<root>/<id>/app.json      the install record (version, port, settings)
+//	<root>/<id>/app.json      the install record (FileStore, the default Store)
 //	<root>/<id>/data/...      seed files and the app's persistent data
 //
 // The compose project name is the app id. Because the environment is stored
@@ -16,7 +16,6 @@ package apps
 import (
 	"cmp"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -43,7 +42,6 @@ var (
 )
 
 const (
-	recordFile  = "app.json"
 	composeFile = "compose.yaml"
 	runtimeFile = "runtime.compose.yaml"
 	envFile     = ".env"
@@ -62,6 +60,26 @@ networks:
     driver: bridge
 `
 
+// Exposer publishes installed apps at their own domain, typically through a
+// TLS-terminating reverse proxy. It is optional: without one, apps are only
+// reached at host:port and the domain setting is unavailable.
+type Exposer interface {
+	// Expose routes Domain to the app's published Port, replacing any
+	// previous route for the app.
+	Expose(ctx context.Context, app Exposure) error
+	// Unexpose removes the app's route. Removing a missing route succeeds.
+	Unexpose(ctx context.Context, id string) error
+}
+
+// Exposure describes an app to publish.
+type Exposure struct {
+	ID     string
+	Name   string
+	Domain string
+	Port   int
+	Log    func(string) // progress notes for the operation's log
+}
+
 // Settings are host-wide values exposed to every app template.
 type Settings struct {
 	Host             string // address users reach apps at, e.g. 192.168.1.10
@@ -71,11 +89,13 @@ type Settings struct {
 	DNSIP            string // DNS_IP
 	NetworkInterface string // NETWORK_INTERFACE
 	Arch             string // amd64, arm64; empty asks the daemon
+	Exposer          Exposer
 }
 
 // Manager installs and operates apps.
 type Manager struct {
 	root     string
+	store    Store
 	catalog  *catalog.Catalog
 	cli      *compose.CLI
 	engine   *engine.Client
@@ -85,20 +105,21 @@ type Manager struct {
 	arch   string // cached daemon architecture
 }
 
-func NewManager(root string, cat *catalog.Catalog, cli *compose.CLI, eng *engine.Client, settings Settings) *Manager {
+func NewManager(root string, store Store, cat *catalog.Catalog, cli *compose.CLI, eng *engine.Client, settings Settings) *Manager {
 	settings.Host = cmp.Or(settings.Host, "localhost")
 	settings.LocalDomain = cmp.Or(settings.LocalDomain, "local")
 	settings.Timezone = cmp.Or(settings.Timezone, "UTC")
 	settings.DNSIP = cmp.Or(settings.DNSIP, "9.9.9.9")
 	settings.NetworkInterface = cmp.Or(settings.NetworkInterface, "eth0")
-	return &Manager{root: root, catalog: cat, cli: cli, engine: eng, settings: settings}
+	return &Manager{root: root, store: store, catalog: cat, cli: cli, engine: eng, settings: settings}
 }
 
-// Record is the persisted install record of an app.
+// Record is the install record of an app, kept in the Store.
 type Record struct {
 	ID          string            `json:"id"`
 	Version     string            `json:"version"`
 	Port        int               `json:"port"`
+	Domain      string            `json:"domain,omitempty"` // published through the Exposer
 	Values      map[string]string `json:"values"`
 	InstalledAt time.Time         `json:"installed_at"`
 	UpdatedAt   time.Time         `json:"updated_at"`
@@ -155,23 +176,11 @@ func (m *Manager) Arch(ctx context.Context) (string, error) {
 	return m.arch, nil
 }
 
-func (m *Manager) readRecord(id string) (*Record, error) {
+func (m *Manager) readRecord(ctx context.Context, id string) (*Record, error) {
 	if !validID(id) {
 		return nil, fmt.Errorf("%w: %s", ErrNotInstalled, id)
 	}
-	data, err := os.ReadFile(filepath.Join(m.dir(id), recordFile))
-	if os.IsNotExist(err) {
-		return nil, fmt.Errorf("%w: %s", ErrNotInstalled, id)
-	}
-	if err != nil {
-		return nil, err
-	}
-	var r Record
-	if err := json.Unmarshal(data, &r); err != nil {
-		return nil, fmt.Errorf("%s: %w", recordFile, err)
-	}
-	r.ID = id
-	return &r, nil
+	return m.store.GetApp(ctx, id)
 }
 
 // validID rejects ids that could escape the apps root.
@@ -181,31 +190,24 @@ func validID(id string) bool {
 
 // List returns every installed app, sorted by id.
 func (m *Manager) List(ctx context.Context) ([]Installed, error) {
-	entries, err := os.ReadDir(m.root)
-	if err != nil && !os.IsNotExist(err) {
+	records, err := m.store.ListApps(ctx)
+	if err != nil {
 		return nil, err
 	}
 	containers, err := m.containers(ctx, "")
 	if err != nil {
 		return nil, err
 	}
-	out := []Installed{}
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		record, err := m.readRecord(entry.Name())
-		if err != nil {
-			continue
-		}
-		out = append(out, m.describe(*record, containers[record.ID]))
+	out := make([]Installed, 0, len(records))
+	for _, record := range records {
+		out = append(out, m.describe(record, containers[record.ID]))
 	}
 	return out, nil
 }
 
 // Get returns one installed app.
 func (m *Manager) Get(ctx context.Context, id string) (*Installed, error) {
-	record, err := m.readRecord(id)
+	record, err := m.readRecord(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -218,8 +220,8 @@ func (m *Manager) Get(ctx context.Context, id string) (*Installed, error) {
 }
 
 // IsInstalled reports whether app id has an install record.
-func (m *Manager) IsInstalled(id string) bool {
-	_, err := m.readRecord(id)
+func (m *Manager) IsInstalled(ctx context.Context, id string) bool {
+	_, err := m.readRecord(ctx, id)
 	return err == nil
 }
 
@@ -267,7 +269,9 @@ func (m *Manager) describe(record Record, containers []Container) Installed {
 		installed.App = app
 		installed.LatestVersion = app.Version
 		installed.UpdateAvailable = app.Version != "" && app.Version != record.Version
-		if !app.NoGUI && record.Port > 0 {
+		if !app.NoGUI && record.Domain != "" {
+			installed.URL = "https://" + record.Domain + app.URLSuffix
+		} else if !app.NoGUI && record.Port > 0 {
 			scheme := "http"
 			if app.HTTPS {
 				scheme = "https"
@@ -280,9 +284,13 @@ func (m *Manager) describe(record Record, containers []Container) Installed {
 
 // Request carries user choices for an install or reconfiguration.
 type Request struct {
-	Port   int               `json:"port,omitempty"` // 0 keeps the current or default port
+	Port   int               `json:"port,omitempty"`   // 0 keeps the current or default port
+	Domain *string           `json:"domain,omitempty"` // nil keeps the current domain; "" removes it
 	Values map[string]string `json:"values,omitempty"`
 }
+
+// CanExpose reports whether apps can be published at a domain.
+func (m *Manager) CanExpose() bool { return m.settings.Exposer != nil }
 
 // Plan is a validated install or update, ready to apply.
 type Plan struct {
@@ -290,6 +298,8 @@ type Plan struct {
 	Record  Record
 	Fresh   bool // true for a new install
 	compose []byte
+	// previousDomain is the domain before this change, to unexpose it.
+	previousDomain string
 }
 
 // PlanInstall validates a new install of app id.
@@ -301,7 +311,7 @@ func (m *Manager) PlanInstall(ctx context.Context, id string, req Request) (*Pla
 	if app.Deprecated {
 		return nil, fmt.Errorf("%w: %s is deprecated", ErrUnavailable, app.Name)
 	}
-	if m.IsInstalled(id) {
+	if m.IsInstalled(ctx, id) {
 		return nil, fmt.Errorf("%w: %s", ErrInstalled, id)
 	}
 	now := time.Now().UTC()
@@ -312,7 +322,7 @@ func (m *Manager) PlanInstall(ctx context.Context, id string, req Request) (*Pla
 // template, optionally with new settings. Omitted settings keep their
 // current values; generated secrets are always preserved.
 func (m *Manager) PlanUpdate(ctx context.Context, id string, req Request) (*Plan, error) {
-	record, err := m.readRecord(id)
+	record, err := m.readRecord(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -342,6 +352,18 @@ func (m *Manager) plan(ctx context.Context, app *catalog.App, record Record, req
 			return nil, catalog.FieldErrors{"port": fmt.Sprintf("port %d is already used by %s", port, owner)}
 		}
 	}
+	previousDomain := record.Domain
+	if req.Domain != nil {
+		domain := strings.ToLower(strings.TrimSuffix(strings.TrimSpace(*req.Domain), "."))
+		switch {
+		case domain == "":
+		case m.settings.Exposer == nil:
+			return nil, catalog.FieldErrors{"domain": "no reverse proxy is configured to publish apps"}
+		case !validDomain(domain):
+			return nil, catalog.FieldErrors{"domain": "must be a domain name such as app.example.com"}
+		}
+		record.Domain = domain
+	}
 	input := req.Values
 	if input == nil {
 		input = map[string]string{}
@@ -356,7 +378,26 @@ func (m *Manager) plan(ctx context.Context, app *catalog.App, record Record, req
 	}
 	record.Version, record.Port, record.Values = app.Version, port, values
 	record.UpdatedAt = time.Now().UTC()
-	return &Plan{App: app, Record: record, Fresh: fresh, compose: data}, nil
+	return &Plan{App: app, Record: record, Fresh: fresh, compose: data, previousDomain: previousDomain}, nil
+}
+
+// validDomain accepts lowercase DNS names with at least two labels.
+func validDomain(name string) bool {
+	labels := strings.Split(name, ".")
+	if len(labels) < 2 || len(name) > 253 {
+		return false
+	}
+	for _, label := range labels {
+		if label == "" || len(label) > 63 || label[0] == '-' || label[len(label)-1] == '-' {
+			return false
+		}
+		for _, c := range label {
+			if !(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-') {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // portOwner returns the name of a container (outside project) publishing
@@ -387,14 +428,19 @@ func (m *Manager) Environment(record Record) map[string]string {
 		env = map[string]string{}
 	}
 	port := strconv.Itoa(record.Port)
+	domain, protocol, exposed := net.JoinHostPort(m.settings.Host, port), "http", "false"
+	if record.Domain != "" {
+		// The exposer terminates TLS in front of the app.
+		domain, protocol, exposed = record.Domain, "https", "true"
+	}
 	maps.Copy(env, map[string]string{
 		"APP_ID":            record.ID,
 		"APP_PORT":          port,
 		"APP_DATA_DIR":      m.dir(record.ID),
 		"APP_HOST":          m.settings.Host,
-		"APP_DOMAIN":        net.JoinHostPort(m.settings.Host, port),
-		"APP_PROTOCOL":      "http",
-		"APP_EXPOSED":       "false",
+		"APP_DOMAIN":        domain,
+		"APP_PROTOCOL":      protocol,
+		"APP_EXPOSED":       exposed,
 		"LOCAL_DOMAIN":      m.settings.LocalDomain,
 		"ROOT_FOLDER_HOST":  m.settings.StorageDir,
 		"TZ":                m.settings.Timezone,
@@ -433,6 +479,9 @@ func (m *Manager) Apply(ctx context.Context, plan *Plan, out func(string)) error
 		if downErr := m.cli.Down(cleanup, m.project(record), true, out); downErr != nil {
 			out("Rollback: " + downErr.Error())
 		}
+		if delErr := m.store.DeleteApp(cleanup, record.ID); delErr != nil {
+			out("Rollback: " + delErr.Error())
+		}
 		os.RemoveAll(dir)
 	}
 	return err
@@ -456,7 +505,7 @@ func (m *Manager) apply(ctx context.Context, plan *Plan, out func(string)) error
 	if err := writeEnvFile(filepath.Join(dir, envFile), env); err != nil {
 		return err
 	}
-	if err := writeRecord(filepath.Join(dir, recordFile), record); err != nil {
+	if err := m.store.PutApp(ctx, record); err != nil {
 		return err
 	}
 	if app := plan.App; app.UID != nil && app.GID != nil {
@@ -474,7 +523,27 @@ func (m *Manager) apply(ctx context.Context, plan *Plan, out func(string)) error
 	if err := m.cli.Up(ctx, m.project(record), opts, out); err != nil {
 		return err
 	}
+	if err := m.publish(ctx, plan, out); err != nil {
+		return err
+	}
 	out("Done")
+	return nil
+}
+
+// publish brings the app's route in line with its domain.
+func (m *Manager) publish(ctx context.Context, plan *Plan, out func(string)) error {
+	exposer, record := m.settings.Exposer, plan.Record
+	if exposer == nil {
+		return nil
+	}
+	if record.Domain != "" {
+		out("Publishing at https://" + record.Domain)
+		return exposer.Expose(ctx, Exposure{ID: record.ID, Name: plan.App.Name, Domain: record.Domain, Port: record.Port, Log: out})
+	}
+	if plan.previousDomain != "" {
+		out("Unpublishing " + plan.previousDomain)
+		return exposer.Unexpose(ctx, record.ID)
+	}
 	return nil
 }
 
@@ -550,14 +619,6 @@ func chownData(dir string, uid, gid int, out func(string)) {
 	})
 }
 
-func writeRecord(path string, record Record) error {
-	data, err := json.MarshalIndent(record, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writeFileAtomic(path, append(data, '\n'), 0o600)
-}
-
 // writeEnvFile writes a dotenv file so the plain compose CLI works in the
 // app directory. The panel itself also passes every variable through the
 // process environment, which compose gives precedence over .env. Values are
@@ -611,7 +672,7 @@ const (
 // Do runs a lifecycle action. Start uses `up` so it also recreates
 // containers that were removed.
 func (m *Manager) Do(ctx context.Context, id string, action Action, out func(string)) error {
-	record, err := m.readRecord(id)
+	record, err := m.readRecord(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -628,11 +689,20 @@ func (m *Manager) Do(ctx context.Context, id string, action Action, out func(str
 // Uninstall removes an app's containers and files. With keepData the data
 // directory and named volumes are preserved, so reinstalling picks them up.
 func (m *Manager) Uninstall(ctx context.Context, id string, keepData bool, out func(string)) error {
-	record, err := m.readRecord(id)
+	record, err := m.readRecord(ctx, id)
 	if err != nil {
 		return err
 	}
 	if err := m.cli.Down(ctx, m.project(*record), !keepData, out); err != nil {
+		return err
+	}
+	if record.Domain != "" && m.settings.Exposer != nil {
+		out("Unpublishing " + record.Domain)
+		if err := m.settings.Exposer.Unexpose(ctx, id); err != nil {
+			return err
+		}
+	}
+	if err := m.store.DeleteApp(ctx, id); err != nil {
 		return err
 	}
 	dir := m.dir(id)
@@ -640,7 +710,7 @@ func (m *Manager) Uninstall(ctx context.Context, id string, keepData bool, out f
 		out("Removing " + dir)
 		return os.RemoveAll(dir)
 	}
-	for _, name := range []string{composeFile, runtimeFile, envFile, recordFile} {
+	for _, name := range []string{composeFile, runtimeFile, envFile} {
 		if err := os.Remove(filepath.Join(dir, name)); err != nil && !os.IsNotExist(err) {
 			return err
 		}

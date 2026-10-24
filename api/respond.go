@@ -80,6 +80,8 @@ func fail(w http.ResponseWriter, err error) {
 		default:
 			writeError(w, http.StatusBadGateway, "docker_error", engineErr.Message)
 		}
+	case errors.Is(err, engine.ErrUnavailable):
+		writeError(w, http.StatusServiceUnavailable, "docker_unavailable", err.Error())
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
 		writeError(w, http.StatusServiceUnavailable, "canceled", err.Error())
 	default:

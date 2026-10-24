@@ -1,50 +1,84 @@
 package web
 
 import (
+	"encoding/json"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 )
 
-func TestHandler(t *testing.T) {
-	h := Handler()
-	get := func(path string, header http.Header) *httptest.ResponseRecorder {
+// The assets satisfy the panel module contract (version 1).
+func TestManifestFollowsContract(t *testing.T) {
+	data, err := fs.ReadFile(UI, "manifest.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var m struct {
+		Contract int      `json:"contract"`
+		ID       string   `json:"id"`
+		Title    string   `json:"title"`
+		Entry    string   `json:"entry"`
+		Styles   []string `json:"styles"`
+		Home     string   `json:"home"`
+		Nav      []struct {
+			Path, Title string
+		} `json:"nav"`
+	}
+	if err := json.Unmarshal(data, &m); err != nil {
+		t.Fatal(err)
+	}
+	if m.Contract != 1 || !regexp.MustCompile(`^[a-z][a-z0-9-]*$`).MatchString(m.ID) || m.Title == "" {
+		t.Fatalf("manifest = %+v", m)
+	}
+	for _, name := range append([]string{m.Entry, "index.html"}, m.Styles...) {
+		if _, err := fs.Stat(UI, name); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+	entry, _ := fs.ReadFile(UI, m.Entry)
+	if !regexp.MustCompile(`export (function|const) mount\b`).Match(entry) {
+		t.Error("entry does not export mount")
+	}
+	// Every navigation entry and the home page have a route.
+	for _, path := range append([]string{m.Home}, func() (p []string) {
+		for _, n := range m.Nav {
+			p = append(p, n.Path)
+		}
+		return
+	}()...) {
+		if !strings.Contains(string(entry), `path: '`+path+`'`) {
+			t.Errorf("no route for %s", path)
+		}
+	}
+}
+
+func TestStatic(t *testing.T) {
+	h := Static(UI)
+	get := func(path, etag string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest("GET", path, nil)
-		for k, v := range header {
-			req.Header[k] = v
+		if etag != "" {
+			req.Header.Set("If-None-Match", etag)
 		}
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, req)
 		return w
 	}
-
-	index := get("/", nil)
-	if index.Code != 200 || !strings.Contains(index.Body.String(), `src="app.js"`) {
-		t.Fatalf("index: %d", index.Code)
+	index := get("/", "")
+	if index.Code != 200 || !strings.Contains(index.Header().Get("Content-Security-Policy"), "default-src 'self'") {
+		t.Fatalf("index: %d %v", index.Code, index.Header())
 	}
-	if csp := index.Header().Get("Content-Security-Policy"); !strings.Contains(csp, "default-src 'self'") {
-		t.Fatalf("csp = %q", csp)
-	}
-	etag := index.Header().Get("ETag")
-	if etag == "" {
-		t.Fatal("missing ETag")
-	}
-	if w := get("/", http.Header{"If-None-Match": {etag}}); w.Code != http.StatusNotModified {
+	if w := get("/", index.Header().Get("ETag")); w.Code != http.StatusNotModified {
 		t.Fatalf("revalidation: %d", w.Code)
 	}
-	if w := get("/lib/html.js", nil); w.Code != 200 || !strings.Contains(w.Header().Get("Content-Type"), "javascript") {
-		t.Fatalf("module: %d %q", w.Code, w.Header().Get("Content-Type"))
+	if w := get("/module.js", ""); w.Code != 200 || !strings.Contains(w.Header().Get("Content-Type"), "javascript") {
+		t.Fatalf("module.js: %d %q", w.Code, w.Header().Get("Content-Type"))
 	}
-	for _, path := range []string{"/missing.js", "/../web.go", "/vendor/"} {
-		if w := get(path, nil); w.Code != 404 {
+	for _, path := range []string{"/missing.js", "/pages/", "/../web.go"} {
+		if w := get(path, ""); w.Code != 404 {
 			t.Errorf("%s: %d", path, w.Code)
 		}
-	}
-	req := httptest.NewRequest("POST", "/", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, req)
-	if w.Code != http.StatusMethodNotAllowed {
-		t.Fatalf("POST: %d", w.Code)
 	}
 }

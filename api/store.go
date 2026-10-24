@@ -21,7 +21,7 @@ func (s *Server) listCatalog(w http.ResponseWriter, r *http.Request) {
 	list := s.Catalog.List(catalog.Query{Search: q.Get("search"), Category: q.Get("category")})
 	out := make([]storeApp, 0, len(list))
 	for _, app := range list {
-		out = append(out, storeApp{App: app, Installed: s.Apps.IsInstalled(app.ID)})
+		out = append(out, storeApp{App: app, Installed: s.Apps.IsInstalled(r.Context(), app.ID)})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"apps": out, "loaded_at": s.Catalog.LoadedAt()})
 }
@@ -48,8 +48,10 @@ func (s *Server) getCatalogApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"app": storeApp{App: app, Installed: s.Apps.IsInstalled(id)}, "readme": readme,
+		"app": storeApp{App: app, Installed: s.Apps.IsInstalled(r.Context(), id)}, "readme": readme,
 		"arch": arch, "supported": app.SupportsArch(arch),
+		// Publishing at a domain needs both an exposer and an app that supports it.
+		"exposable": s.Apps.CanExpose() && app.Exposable,
 	})
 }
 
@@ -96,7 +98,7 @@ func (s *Server) getApp(w http.ResponseWriter, r *http.Request) {
 		fail(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, app)
+	writeJSON(w, http.StatusOK, map[string]any{"app": app, "exposable": s.Apps.CanExpose() && app.App != nil && app.App.Exposable})
 }
 
 type installRequest struct {
@@ -145,7 +147,7 @@ func (s *Server) updateApp(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) uninstallApp(w http.ResponseWriter, r *http.Request) {
 	id, keepData := r.PathValue("id"), queryBool(r, "keep_data")
-	if !s.Apps.IsInstalled(id) {
+	if !s.Apps.IsInstalled(r.Context(), id) {
 		fail(w, apps.ErrNotInstalled)
 		return
 	}
@@ -162,7 +164,7 @@ func (s *Server) appAction(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "not_found", "unknown app action")
 		return
 	}
-	if !s.Apps.IsInstalled(id) {
+	if !s.Apps.IsInstalled(r.Context(), id) {
 		fail(w, apps.ErrNotInstalled)
 		return
 	}

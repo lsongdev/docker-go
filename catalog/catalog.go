@@ -43,6 +43,7 @@ type App struct {
 	NoGUI         bool        `json:"no_gui"`
 	HTTPS         bool        `json:"https"`
 	URLSuffix     string      `json:"url_suffix,omitempty"`
+	Exposable     bool        `json:"exposable"` // can be published at its own domain
 	ForcePull     bool        `json:"force_pull"`
 	Deprecated    bool        `json:"deprecated"`
 	Architectures []string    `json:"supported_architectures"`

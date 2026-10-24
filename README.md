@@ -5,7 +5,12 @@ Compose stacks, and an app store that installs apps from a git catalog
 (default: [lsongdev/ohmyserver-apps](https://github.com/lsongdev/ohmyserver-apps)).
 
 One static Go binary. The UI is Preact + HTM loaded as native ES modules, with
-no build step. Its only third-party Go dependency is `coder/websocket`.
+no build step. It needs no database, and its only Go dependency is
+`coder/websocket`.
+
+docker-go is also a **panel module**: it follows the module contract
+(panelkit's `CONTRACT.md`), so a panel shell can mount it beside other
+modules without docker-go depending on that shell.
 
 ```sh
 go run ./cmd/docker-go -listen 127.0.0.1:8080 -data ./data
@@ -26,16 +31,16 @@ plugin (or `docker-compose`) and `git` on the host.
 | `-storage` | `<data>/storage` | Shared media root exposed to apps (`ROOT_FOLDER_HOST`) |
 | `-tz`      | system        | `TZ` passed to apps |
 
-> The panel controls the Docker daemon, which is root-equivalent. It has no
-> login of its own: keep it on localhost or put it behind an authenticating
-> reverse proxy.
+> The panel controls the Docker daemon, which is root-equivalent. Set
+> `DOCKER_GO_PASSWORD` to require HTTP basic authentication (any user name);
+> without it, keep the panel on localhost.
 
 ## Architecture
 
 Each layer depends only on the layers below it:
 
 ```
-web/       L4  Browser UI: Preact + HTM ES modules, embedded, no build
+web/       L4  Module assembly (web.New) + browser UI (ES modules, mount contract)
 api/       L3  HTTP: JSON envelope, SSE streams, WebSocket terminal, its own DTOs
 apps/      L2  App lifecycle: plan → apply, built on compose + catalog + engine
 catalog/   L2  App catalog: git sync, manifest parsing, install-form validation
@@ -74,6 +79,20 @@ self-contained directory:
                  data/                  seed files + persistent data (APP_DATA_DIR)
 ```
 
+Apps can also be published at their own domain through an optional
+`apps.Exposer` (for example a TLS-terminating reverse proxy). Without one the
+domain setting is hidden and apps are reached at host:port.
+
+Install records go through `apps.Store`. The default `FileStore` keeps them
+as `app.json` beside each app's compose files. A host that centralises state
+(for example in its own database) can pass another implementation in
+`web.Options.Store`.
+
+**web** wires every layer together (`web.New(ctx, web.Options)`).
+`Docker.Handler` and `Docker.Assets` satisfy the module contract;
+`Docker.Standalone` serves both on their own. The standalone command and a
+panel use the same assembly.
+
 **jobs** runs installs, pulls, builds and compose actions in the background.
 At most one job per resource. Logs fan out to any number of SSE observers, so
 the UI can close the dialog and reattach later.
@@ -96,8 +115,9 @@ declares it in `runtime.compose.yaml`.
 
 ## HTTP API
 
-All routes are relative to the mount point (`/api/` in the standalone
-binary). Success is `{"data": …}`; failure is
+All routes are relative to the mount point (`/api/` standalone,
+`/m/docker/api/` in a panel). A daemon that cannot be reached answers 503
+`docker_unavailable`. Success is `{"data": …}`; failure is
 `{"error": {"code", "message", "fields"}}`. List fields are always arrays.
 Write requests must be same-origin JSON with no unknown fields.
 
@@ -128,6 +148,11 @@ go test -race ./...
 go test -tags integration ./engine            # against a real daemon
 ```
 
-`engine/enginetest` provides a fake daemon for tests in any layer. Browser
-dependencies are vendored in `web/static/vendor` (see its README); the UI
-works offline and under a strict Content-Security-Policy.
+`engine/enginetest` provides a fake daemon for tests in any layer.
+
+The UI is self-contained: `web/ui/manifest.json` describes it,
+`module.js` exports `mount(el, ctx)`, and `index.html` + `standalone.js` host
+it on its own. Shared components are in `web/ui/lib`; Preact, htm and
+xterm.js are vendored in `web/ui/vendor`. The UI works offline and under a
+strict Content-Security-Policy, and its styles follow a panel's `--panel-*`
+theme variables when mounted.

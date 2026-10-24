@@ -228,3 +228,13 @@ func TestTarDirectoryHonoursDockerignore(t *testing.T) {
 		t.Fatalf("got %v, want %v", names, want)
 	}
 }
+
+func TestUnreachableDaemon(t *testing.T) {
+	c, err := engine.New(engine.Config{Host: "unix://" + filepath.Join(t.TempDir(), "missing.sock")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Info(context.Background()); !errors.Is(err, engine.ErrUnavailable) {
+		t.Fatalf("err = %v, want ErrUnavailable", err)
+	}
+}

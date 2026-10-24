@@ -41,7 +41,7 @@ func newTestServer(t *testing.T) (*httptest.Server, *enginetest.Daemon) {
 	s := &Server{
 		Engine:  client,
 		Catalog: cat,
-		Apps:    apps.NewManager(t.TempDir(), cat, nil, client, apps.Settings{}),
+		Apps:    newApps(t, cat, client),
 		Jobs:    jobs.NewManager(ctx, 10),
 	}
 	srv := httptest.NewServer(s.Handler())
@@ -285,4 +285,19 @@ func TestImageReferencesWithSlashes(t *testing.T) {
 	if status != 200 || e.Error != nil {
 		t.Fatalf("status %d error %+v", status, e.Error)
 	}
+}
+
+func TestDaemonDownIsServiceUnavailable(t *testing.T) {
+	client, _ := engine.New(engine.Config{Host: "unix://" + filepath.Join(t.TempDir(), "missing.sock")})
+	srv := httptest.NewServer((&Server{Engine: client}).Handler())
+	defer srv.Close()
+	status, e := call(t, "GET", srv.URL+"/containers", "")
+	if status != 503 || e.Error == nil || e.Error.Code != "docker_unavailable" {
+		t.Fatalf("status %d error %+v", status, e.Error)
+	}
+}
+
+func newApps(t *testing.T, cat *catalog.Catalog, client *engine.Client) *apps.Manager {
+	root := t.TempDir()
+	return apps.NewManager(root, apps.NewFileStore(root), cat, nil, client, apps.Settings{})
 }

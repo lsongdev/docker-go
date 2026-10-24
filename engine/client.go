@@ -127,7 +127,7 @@ func (c *Client) APIVersion(ctx context.Context) (string, error) {
 	}
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("engine: connect %s: %w", c.host, err)
+		return "", fmt.Errorf("engine: %w at %s: %w", ErrUnavailable, c.host, err)
 	}
 	io.Copy(io.Discard, resp.Body)
 	resp.Body.Close()
@@ -165,6 +165,10 @@ func compareVersions(a, b string) int {
 	}
 	return 0
 }
+
+// ErrUnavailable wraps failures to reach the daemon at all (as opposed to
+// errors the daemon reports), so callers can tell "Docker is down" apart.
+var ErrUnavailable = errors.New("docker daemon unavailable")
 
 // Error is a non-2xx response from the daemon.
 type Error struct {
@@ -235,7 +239,7 @@ func (c *Client) do(ctx context.Context, r request) (*http.Response, error) {
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return nil, ctxErr
 		}
-		return nil, fmt.Errorf("engine: %s %s: %w", r.method, r.path, err)
+		return nil, fmt.Errorf("engine: %s %s: %w: %w", r.method, r.path, ErrUnavailable, err)
 	}
 	if resp.StatusCode >= 400 {
 		defer resp.Body.Close()
@@ -310,7 +314,7 @@ func (c *Client) hijack(ctx context.Context, path string, payload any) (*Hijacke
 	var dialer net.Dialer
 	conn, err := dialer.DialContext(ctx, network, c.addr)
 	if err != nil {
-		return nil, fmt.Errorf("engine: connect %s: %w", c.host, err)
+		return nil, fmt.Errorf("engine: %w at %s: %w", ErrUnavailable, c.host, err)
 	}
 	if c.scheme == "https" {
 		cfg := c.tls.Clone()

@@ -1,0 +1,20 @@
+/* Docker module styles; everything else comes from the panel shell. */
+.terminal { background: #000; border-radius: var(--radius); padding: 8px; height: 480px; }
+.terminal .xterm { height: 100%; }
+.job-error { color: var(--danger); font-size: 12.5px; overflow-wrap: anywhere; min-width: 0; flex: 1 1 200px; }
+
+/* App store */
+.app-grid > .card { margin-top: 0; }
+.card.app-card { display: flex; }
+.app-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.app-card { display: flex; flex-direction: column; gap: 10px; }
+.app-card p { margin: 0; color: var(--muted); flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.app-head { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.app-head h3 { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.app-icon { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 10px; object-fit: cover; background: var(--surface-2); border: 1px solid var(--border); }
+.app-icon-lg { width: 72px; height: 72px; flex-basis: 72px; border-radius: 14px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.chip { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; padding: 3px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip.active { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
+.readme { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 13.5px; }
+.secret { display: inline-flex; gap: 6px; align-items: center; }

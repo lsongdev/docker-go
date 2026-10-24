@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -45,7 +46,8 @@ func newManager(t *testing.T) (*Manager, *enginetest.Daemon) {
 	d, client := enginetest.New(t)
 	d.JSON("GET /version", engine.Version{Arch: "arm64"})
 	d.JSON("GET /containers/json", []engine.Container{{ID: "c1", Names: []string{"/other"}, Ports: []engine.Port{{PrivatePort: 80, PublicPort: 8080, Type: "tcp"}}}})
-	return NewManager(t.TempDir(), cat, nil, client, Settings{Host: "10.0.0.5", StorageDir: "/srv/storage"}), d
+	root := t.TempDir()
+	return NewManager(root, NewFileStore(root), cat, nil, client, Settings{Host: "10.0.0.5", StorageDir: "/srv/storage"}), d
 }
 
 func TestPlanInstallValidation(t *testing.T) {
@@ -76,7 +78,7 @@ func TestPlanInstallValidation(t *testing.T) {
 	if err := os.MkdirAll(m.dir("notes"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := writeRecord(filepath.Join(m.dir("notes"), recordFile), plan.Record); err != nil {
+	if err := m.store.PutApp(ctx, plan.Record); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := m.PlanInstall(ctx, "notes", Request{Port: 9000}); !errors.Is(err, ErrInstalled) {
@@ -166,5 +168,101 @@ func TestDescribeStatus(t *testing.T) {
 		if !got.UpdateAvailable || got.LatestVersion != "2.0" || got.URL != "http://10.0.0.5:9000" {
 			t.Errorf("%s: %+v", name, got)
 		}
+	}
+}
+
+type fakeExposer struct{ calls []string }
+
+func (f *fakeExposer) Expose(_ context.Context, e Exposure) error {
+	f.calls = append(f.calls, "expose "+e.ID+" "+e.Domain+":"+strconv.Itoa(e.Port))
+	return nil
+}
+
+func (f *fakeExposer) Unexpose(_ context.Context, id string) error {
+	f.calls = append(f.calls, "unexpose "+id)
+	return nil
+}
+
+func TestDomainNeedsExposer(t *testing.T) {
+	m, _ := newManager(t)
+	domain := "notes.example.com"
+	_, err := m.PlanInstall(context.Background(), "notes", Request{Port: 9000, Domain: &domain, Values: map[string]string{"ADMIN": "me"}})
+	var fields catalog.FieldErrors
+	if !errors.As(err, &fields) || !strings.Contains(fields["domain"], "no reverse proxy") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestDomainPublishing(t *testing.T) {
+	m, _ := newManager(t)
+	exposer := &fakeExposer{}
+	m.settings.Exposer = exposer
+	ctx := context.Background()
+
+	bad := "not a domain"
+	if _, err := m.PlanInstall(ctx, "notes", Request{Port: 9000, Domain: &bad, Values: map[string]string{"ADMIN": "me"}}); err == nil {
+		t.Fatal("invalid domain accepted")
+	}
+	domain := "Notes.Example.com."
+	plan, err := m.PlanInstall(ctx, "notes", Request{Port: 9000, Domain: &domain, Values: map[string]string{"ADMIN": "me"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Record.Domain != "notes.example.com" {
+		t.Fatalf("domain not normalised: %q", plan.Record.Domain)
+	}
+	env := m.Environment(plan.Record)
+	if env["APP_DOMAIN"] != "notes.example.com" || env["APP_PROTOCOL"] != "https" || env["APP_EXPOSED"] != "true" {
+		t.Fatalf("env = %v", env)
+	}
+	if got := m.describe(plan.Record, nil); got.URL != "https://notes.example.com" {
+		t.Fatalf("URL = %q", got.URL)
+	}
+	if err := m.publish(ctx, plan, func(string) {}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Clearing the domain on update unpublishes the app.
+	os.MkdirAll(m.dir("notes"), 0o755)
+	m.store.PutApp(ctx, plan.Record)
+	empty := ""
+	update, err := m.PlanUpdate(ctx, "notes", Request{Domain: &empty})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.publish(ctx, update, func(string) {}); err != nil {
+		t.Fatal(err)
+	}
+	// Omitting the domain keeps it.
+	keep, _ := m.PlanUpdate(ctx, "notes", Request{})
+	if keep.Record.Domain != "notes.example.com" {
+		t.Fatalf("domain dropped: %q", keep.Record.Domain)
+	}
+	want := []string{"expose notes notes.example.com:9000", "unexpose notes"}
+	if strings.Join(exposer.calls, ",") != strings.Join(want, ",") {
+		t.Fatalf("calls = %v", exposer.calls)
+	}
+}
+
+func TestFileStore(t *testing.T) {
+	ctx := context.Background()
+	s := NewFileStore(t.TempDir())
+	if _, err := s.GetApp(ctx, "notes"); !errors.Is(err, ErrNotInstalled) {
+		t.Fatalf("missing app: %v", err)
+	}
+	if err := s.PutApp(ctx, Record{ID: "notes", Version: "1.0", Values: map[string]string{"K": "v"}}); err != nil {
+		t.Fatal(err)
+	}
+	// A directory without a record (e.g. data kept after uninstall) is not an app.
+	os.MkdirAll(filepath.Join(s.root, "kept"), 0o755)
+	list, err := s.ListApps(ctx)
+	if err != nil || len(list) != 1 || list[0].ID != "notes" || list[0].Values["K"] != "v" {
+		t.Fatalf("list = %+v, %v", list, err)
+	}
+	if err := s.DeleteApp(ctx, "notes"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.DeleteApp(ctx, "notes"); err != nil {
+		t.Fatalf("deleting a missing record: %v", err)
 	}
 }
