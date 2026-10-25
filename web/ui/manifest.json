@@ -7,14 +7,14 @@
   "styles": ["style.css", "docker.css"],
   "home": "/",
   "nav": [
-    { "path": "/", "title": "仪表盘", "icon": "◎", "group": "概览" },
-    { "path": "/containers", "title": "容器", "icon": "▣", "group": "资源" },
-    { "path": "/images", "title": "镜像", "icon": "◫", "group": "资源" },
-    { "path": "/volumes", "title": "存储卷", "icon": "⛁", "group": "资源" },
-    { "path": "/networks", "title": "网络", "icon": "⇄", "group": "资源" },
-    { "path": "/stacks", "title": "Compose", "icon": "☰", "group": "编排" },
-    { "path": "/store", "title": "应用商店", "icon": "✦", "group": "应用" },
-    { "path": "/apps", "title": "已安装", "icon": "▤", "group": "应用" },
-    { "path": "/jobs", "title": "任务", "icon": "⟳", "group": "系统" }
+    { "path": "/", "title": "Dashboard", "icon": "◎", "group": "Overview" },
+    { "path": "/containers", "title": "Containers", "icon": "▣", "group": "Resources" },
+    { "path": "/images", "title": "Images", "icon": "◫", "group": "Resources" },
+    { "path": "/volumes", "title": "Volumes", "icon": "⛁", "group": "Resources" },
+    { "path": "/networks", "title": "Networks", "icon": "⇄", "group": "Resources" },
+    { "path": "/stacks", "title": "Compose", "icon": "☰", "group": "Orchestration" },
+    { "path": "/store", "title": "App Store", "icon": "✦", "group": "Apps" },
+    { "path": "/apps", "title": "Installed", "icon": "▤", "group": "Apps" },
+    { "path": "/jobs", "title": "Jobs", "icon": "⟳", "group": "System" }
   ]
 }
