@@ -51,7 +51,7 @@ function Sidebar({ path }) {
   document.getElementById('layout').classList.toggle('menu-open', open);
   return html`
     <a class="brand" href="#/"><span class="brand-mark">◆</span>${manifest.title}</a>
-    <button class="btn btn-ghost menu-toggle" aria-label="Menu" onClick=${() => setOpen(o => !o)}>☰</button>
+    <button class="button button-ghost menu-toggle" aria-label="Menu" onClick=${() => setOpen(o => !o)}>☰</button>
     <nav class="nav" onClick=${() => setOpen(false)}>${groups.map(g => html`<div class="nav-group">
       ${g.name ? html`<div class="nav-heading">${g.name}</div>` : null}
       ${g.items.map(i => html`<a class=${`nav-link ${i === active ? 'active' : ''}`} href=${href(i.path)}>

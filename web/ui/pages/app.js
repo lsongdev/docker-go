@@ -1,6 +1,6 @@
 import { html, useState } from '../lib/html.js';
 import { useResource } from '../lib/hooks.js';
-import { Page, Resource, Status, KV, Tabs, Field, Notice, Badge, ConfirmButton } from '../lib/ui.js';
+import { Page, Resource, Status, KV, Tabs, Field, Notice, Badge, ConfirmButton, Table } from '../lib/ui.js';
 import { datetime } from '../lib/format.js';
 import { usePanel } from '../lib/panel.js';
 import { useDockerEvents, startJob } from '../docker.js';
@@ -21,19 +21,19 @@ export default function App({ params, query }) {
   }).catch(() => {});
   const running = a && (a.status === 'running' || a.status === 'partial');
   return html`<${Page} title=${a?.app?.name || params.id}
-    subtitle=${a ? html`<${Status} state=${a.status} /> 版本 ${a.version}` : null}
+    subtitle=${a ? html`<${Status} state=${a.status} /> Version ${a.version}` : null}
     actions=${a ? html`
-      ${a.url && a.status === 'running' ? html`<a class="btn btn-primary" href=${a.url} target="_blank" rel="noopener">打开 ↗</a>` : null}
+      ${a.url && a.status === 'running' ? html`<a class="button button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
       ${running
-        ? html`<button class="btn" onClick=${() => act('restart')}>重启</button><button class="btn" onClick=${() => act('stop')}>停止</button>`
-        : html`<button class="btn" onClick=${() => act('start')}>启动</button>`}
-      ${a.update_available ? html`<button class="btn" onClick=${update}>更新到 ${a.latest_version}</button>` : null}
-      <${ConfirmButton} label="卸载" title=${`卸载 ${a.app?.name || a.id}`} confirmLabel="卸载"
-        description="停止并删除应用的容器和网络。" checkbox="保留数据目录和数据卷，以便以后重新安装" onConfirm=${uninstall} />
-      <a class="btn" href=${href('/apps')}>返回</a>` : null}>
+        ? html`<button class="button" onClick=${() => act('restart')}>Restart</button><button class="button" onClick=${() => act('stop')}>Stop</button>`
+        : html`<button class="button" onClick=${() => act('start')}>Start</button>`}
+      ${a.update_available ? html`<button class="button" onClick=${update}>Update to ${a.latest_version}</button>` : null}
+      <${ConfirmButton} label="Uninstall" title=${`Uninstall ${a.app?.name || a.id}`} confirmLabel="Uninstall"
+        description="Stop the app and delete its containers and networks." checkbox="Keep the data directory and volumes for a later reinstall" onConfirm=${uninstall} />
+      <a class="button" href=${href('/apps')}>Back</a>` : null}>
     <${Resource} resource=${app}>${a => html`
-      ${a.app ? null : html`<${Notice} tone="warn">此应用已从应用目录中移除，仍可启动、停止和卸载，但无法更新或修改设置。<//>`}
-      <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t })} tabs=${[['overview', '概览'], ['settings', '设置']]} />
+      ${a.app ? null : html`<${Notice} tone="warn">This app was removed from the catalog. It can still be started, stopped and uninstalled, but not updated or reconfigured.<//>`}
+      <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t })} tabs=${[['overview', 'Overview'], ['settings', 'Settings']]} />
       ${tab === 'overview' ? html`<${Overview} a=${a} />` : html`<${Settings} a=${a} exposable=${res.data.exposable} onSaved=${app.reload} />`}`}
     <//>
   <//>`;
@@ -49,24 +49,24 @@ function Overview({ a }) {
         <div><h2 style="margin:0">${a.app?.name || a.id}</h2><div class="muted">${a.app?.short_desc}</div></div>
       </div>
       <${KV} items=${[
-        ['访问地址', a.url ? html`<a href=${a.url} target="_blank" rel="noopener">${a.url}</a>` : null],
-        ['域名', a.domain || null],
-        ['端口', a.port || null],
-        ['版本', html`${a.version} ${a.update_available ? html`<${Badge} tone="blue">最新 ${a.latest_version}<//>` : null}`],
-        ['安装于', datetime(a.installed_at)],
-        ['更新于', datetime(a.updated_at)],
-        ['目录', html`<code>${a.dir}</code>`],
+        ['URL', a.url ? html`<a href=${a.url} target="_blank" rel="noopener">${a.url}</a>` : null],
+        ['Domain', a.domain || null],
+        ['Port', a.port || null],
+        ['Version', html`${a.version} ${a.update_available ? html`<${Badge} tone="blue">Latest ${a.latest_version}<//>` : null}`],
+        ['Installed', datetime(a.installed_at)],
+        ['Updated', datetime(a.updated_at)],
+        ['Directory', html`<code>${a.dir}</code>`],
         ['Compose', html`<a href=${href(`/stacks/${a.id}`)}>${a.id}</a>`],
       ]} />
     </div>
     <div>
-      <div class="card"><h2>容器</h2>
-        ${a.containers.length ? html`<table class="table"><tbody>${a.containers.map(c => html`<tr key=${c.id}>
+      <div class="card"><h2>Containers</h2>
+        ${a.containers.length ? html`<${Table} framed=${false}><tbody>${a.containers.map(c => html`<tr key=${c.id}>
           <td><a href=${href(`/containers/${c.id}`)}>${c.name}</a><div class="cell-sub">${c.image}</div></td>
           <td><${Status} state=${c.state} title=${c.status} /></td>
-        </tr>`)}</tbody></table>` : html`<span class="muted">没有容器，点击"启动"创建</span>`}
+        </tr>`)}</tbody><//>` : html`<span class="muted">No containers; click Start to create them</span>`}
       </div>
-      ${secrets.length ? html`<div class="card"><h2>凭据</h2>
+      ${secrets.length ? html`<div class="card"><h2>Credentials</h2>
         <${KV} items=${secrets.map(f => [f.label, html`<${Secret} value=${a.values[f.env_variable]} />`])} />
       </div>` : null}
     </div>
@@ -79,8 +79,8 @@ function Secret({ value }) {
   const copy = () => navigator.clipboard?.writeText(value);
   return html`<span class="secret">
     <code>${shown ? value : '••••••••'}</code>
-    <button class="btn btn-sm btn-ghost" onClick=${() => setShown(s => !s)}>${shown ? '隐藏' : '显示'}</button>
-    <button class="btn btn-sm btn-ghost" onClick=${copy}>复制</button>
+    <button class="button button-small button-ghost" onClick=${() => setShown(s => !s)}>${shown ? 'Hide' : 'Show'}</button>
+    <button class="button button-small button-ghost" onClick=${copy}>Copy</button>
   </span>`;
 }
 
@@ -92,7 +92,7 @@ function Settings({ a, exposable, onSaved }) {
   const [domain, setDomain] = useState(a.domain || '');
   const [errors, setErrors] = useState({});
   const [error, setError] = useState(null);
-  if (!a.app) return html`<${Notice} tone="info">应用已从目录移除，无法修改设置。<//>`;
+  if (!a.app) return html`<${Notice} tone="info">The app was removed from the catalog, so its settings cannot change.<//>`;
   const submit = async e => {
     e.preventDefault();
     setErrors({});
@@ -105,12 +105,12 @@ function Settings({ a, exposable, onSaved }) {
     }
   };
   return html`<form class="form card" onSubmit=${submit}>
-    <${Notice} tone="info">保存后将使用当前目录中的模板重新部署应用；自动生成的密钥保持不变。<//>
+    <${Notice} tone="info">Saving redeploys the app from the current catalog template; generated secrets stay the same.<//>
     <${Notice} error=${error} />
-    ${a.port ? html`<${Field} label="访问端口" required error=${errors.port}>
+    ${a.port ? html`<${Field} label="Port" required error=${errors.port}>
       <input class="input" type="number" min="1" max="65535" required value=${port} onInput=${e => setPort(e.target.value)} /><//>` : null}
     ${exposable || a.domain ? html`<${DomainField} value=${domain} onChange=${setDomain} error=${errors.domain} />` : null}
     <${AppForm} fields=${fields} values=${values} errors=${errors} onChange=${setValues} />
-    <div class="form-actions"><button class="btn btn-primary">保存并重新部署</button></div>
+    <div class="form-actions"><button class="button button-primary">Save and redeploy</button></div>
   </form>`;
 }

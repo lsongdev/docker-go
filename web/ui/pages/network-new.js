@@ -11,31 +11,31 @@ export default function NetworkNew() {
     e.preventDefault();
     try {
       const n = await api.createNetwork(form);
-      toast(`已创建 ${n.name}`, 'success');
+      toast(`Created ${n.name}`, 'success');
       navigate(`/networks/${n.id}`);
     } catch (err) { setError(err); }
   };
-  return html`<${Page} title="创建网络" actions=${html`<a class="btn" href=${href('/networks')}>返回</a>`}>
+  return html`<${Page} title="New network" actions=${html`<a class="button" href=${href('/networks')}>Back</a>`}>
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
       <div class="form-grid">
-        <${Field} label="名称" required><input class="input" required value=${form.name} onInput=${set('name')} /><//>
-        <${Field} label="驱动">
+        <${Field} label="Name" required><input class="input" required value=${form.name} onInput=${set('name')} /><//>
+        <${Field} label="Driver">
           <select class="input" value=${form.driver} onChange=${set('driver')}>
             ${['bridge', 'macvlan', 'ipvlan', 'overlay'].map(d => html`<option value=${d}>${d}</option>`)}
           </select><//>
       </div>
       <div class="form-grid">
-        <${Field} label="子网" hint="CIDR，留空自动分配"><input class="input mono" value=${form.subnet} onInput=${set('subnet')} placeholder="172.30.0.0/16" /><//>
-        <${Field} label="网关"><input class="input mono" value=${form.gateway} onInput=${set('gateway')} placeholder="172.30.0.1" /><//>
-        <${Field} label="IP 范围" hint="子网内用于分配的 CIDR"><input class="input mono" value=${form.ip_range} onInput=${set('ip_range')} /><//>
+        <${Field} label="Subnet" hint="A CIDR; empty to assign one"><input class="input mono" value=${form.subnet} onInput=${set('subnet')} placeholder="172.30.0.0/16" /><//>
+        <${Field} label="Gateway"><input class="input mono" value=${form.gateway} onInput=${set('gateway')} placeholder="172.30.0.1" /><//>
+        <${Field} label="IP range" hint="The CIDR within the subnet to assign from"><input class="input mono" value=${form.ip_range} onInput=${set('ip_range')} /><//>
       </div>
       <div class="form-actions">
-        <label class="check"><input type="checkbox" checked=${form.internal} onChange=${set('internal')} />内部网络（禁止访问外部）</label>
-        <label class="check"><input type="checkbox" checked=${form.attachable} onChange=${set('attachable')} />允许手动附加</label>
-        <label class="check"><input type="checkbox" checked=${form.ipv6} onChange=${set('ipv6')} />启用 IPv6</label>
+        <label class="field-check"><input type="checkbox" checked=${form.internal} onChange=${set('internal')} />Internal (no outside access)</label>
+        <label class="field-check"><input type="checkbox" checked=${form.attachable} onChange=${set('attachable')} />Attachable</label>
+        <label class="field-check"><input type="checkbox" checked=${form.ipv6} onChange=${set('ipv6')} />Enable IPv6</label>
       </div>
-      <div class="form-actions"><button class="btn btn-primary">创建</button><a class="btn" href=${href('/networks')}>取消</a></div>
+      <div class="form-actions"><button class="button button-primary">Create</button><a class="button" href=${href('/networks')}>Cancel</a></div>
     </form>
   <//>`;
 }

@@ -1,6 +1,6 @@
 import { html, useMemo } from '../lib/html.js';
 import { useResource, useBusy } from '../lib/hooks.js';
-import { Page, Resource, Badge, toast, toastError, confirmDanger } from '../lib/ui.js';
+import { Page, Resource, Badge, toast, toastError, confirmDanger, Table } from '../lib/ui.js';
 import { ago } from '../lib/format.js';
 import { usePanel } from '../lib/panel.js';
 import { useDockerEvents, PruneButton } from '../docker.js';
@@ -14,33 +14,33 @@ export default function Volumes({ query }) {
   const filtered = useMemo(() => (volumes.data || []).filter(v =>
     !search || `${v.name} ${v.project || ''}`.toLowerCase().includes(search.toLowerCase())), [volumes.data, search]);
   const remove = v => {
-    if (!confirmDanger(`删除存储卷 ${v.name}？卷中的数据将永久丢失。`)) return;
+    if (!confirmDanger(`Delete the volume ${v.name}? Its data is lost for good.`)) return;
     run(v.name, async () => {
       await api.removeVolume(v.name);
-      toast(`已删除 ${v.name}`, 'success');
+      toast(`Deleted ${v.name}`, 'success');
       volumes.reload();
     });
   };
-  return html`<${Page} title="存储卷" actions=${html`
-    <${PruneButton} title="清理存储卷" description="删除未被任何容器使用的匿名卷。数据将永久丢失。"
-      allLabel="同时删除未使用的命名卷" prune=${api.pruneVolumes} onDone=${volumes.reload} />
-    <button class="btn btn-primary" onClick=${() => navigate('/volumes/new')}>创建存储卷</button>`}>
+  return html`<${Page} title="Volumes" actions=${html`
+    <${PruneButton} title="Prune volumes" description="Delete every anonymous volume no container uses. Their data is lost for good."
+      allLabel="Also delete unused named volumes" prune=${api.pruneVolumes} onDone=${volumes.reload} />
+    <button class="button button-primary" onClick=${() => navigate('/volumes/new')}>New volume</button>`}>
     <div class="toolbar">
-      <input class="input" type="search" placeholder="搜索名称或项目" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
+      <input class="input" type="search" placeholder="Search names or projects" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
     </div>
-    <${Resource} resource=${{ ...volumes, data: volumes.data && filtered }} empty="没有存储卷">${list => html`
-      <div class="table-wrap"><table class="table">
-        <thead><tr><th>名称</th><th>驱动</th><th>使用</th><th>挂载点</th><th>创建</th><th class="actions">操作</th></tr></thead>
+    <${Resource} resource=${{ ...volumes, data: volumes.data && filtered }} empty="No volumes">${list => html`
+      <${Table}>
+        <thead><tr><th>Name</th><th>Driver</th><th>Used by</th><th>Mount point</th><th>Created</th><th class="actions">Actions</th></tr></thead>
         <tbody>${list.map(v => html`<tr key=${v.name}>
           <td><span class="cell-main mono">${v.name.length > 40 ? v.name.slice(0, 12) + '…' : v.name}</span>
             ${v.project ? html`<div class="cell-sub"><a href=${href(`/stacks/${v.project}`)}>${v.project}</a></div>` : null}</td>
           <td>${v.driver}</td>
-          <td>${v.containers.length ? html`<${Badge} tone="blue" title=${v.containers.join('\n')}>${v.containers.join(', ')}<//>` : html`<span class="muted">未使用</span>`}</td>
+          <td>${v.containers.length ? html`<${Badge} tone="blue" title=${v.containers.join('\n')}>${v.containers.join(', ')}<//>` : html`<span class="muted">Unused</span>`}</td>
           <td class="truncate mono" style="max-width:280px" title=${v.mountpoint}>${v.mountpoint}</td>
           <td class="nowrap">${ago(v.created_at)}</td>
-          <td class="actions"><button class="btn btn-sm btn-danger" disabled=${busy[v.name]} onClick=${() => remove(v)}>删除</button></td>
+          <td class="actions"><button class="button button-small button-danger" disabled=${busy[v.name]} onClick=${() => remove(v)}>Delete</button></td>
         </tr>`)}</tbody>
-      </table></div>`}
+      <//>`}
     <//>
   <//>`;
 }

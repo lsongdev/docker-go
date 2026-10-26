@@ -27,18 +27,18 @@ export default function Store({ query }) {
   const sync = () => startJob(api, () => api.syncCatalog(), { onDone: () => { catalog.reload(); categories.reload(); } }).catch(() => {});
   const loadedAt = catalog.data?.loaded_at;
   const synced = loadedAt && !loadedAt.startsWith('0001');
-  return html`<${Page} title="应用商店" subtitle=${synced ? `目录更新于 ${datetime(loadedAt)}` : '应用目录尚未同步'}
-    actions=${html`<button class="btn" onClick=${sync}>同步目录</button>`}>
+  return html`<${Page} title="App store" subtitle=${synced ? `Catalog updated ${datetime(loadedAt)}` : 'The catalog has not been synced yet'}
+    actions=${html`<button class="button" onClick=${sync}>Sync catalog</button>`}>
     <div class="toolbar">
-      <input class="input" type="search" placeholder="搜索应用" value=${search} onInput=${e => setSearch(e.target.value)} />
+      <input class="input" type="search" placeholder="Search apps" value=${search} onInput=${e => setSearch(e.target.value)} />
     </div>
     <div class="chips">
-      <button class=${`chip ${!category ? 'active' : ''}`} onClick=${() => setQuery({ category: '' })}>全部</button>
+      <button class=${`chip ${!category ? 'active' : ''}`} onClick=${() => setQuery({ category: '' })}>All</button>
       ${(categories.data || []).map(c => html`<button class=${`chip ${category === c.name ? 'active' : ''}`}
         onClick=${() => setQuery({ category: c.name })}>${c.name} <span class="muted">${c.count}</span></button>`)}
     </div>
     <${Resource} resource=${{ ...catalog, data: catalog.data?.apps }}
-      empty=${synced ? '没有匹配的应用' : html`应用目录为空，点击右上角“同步目录”下载`}>${apps => html`
+      empty=${synced ? 'No matching apps' : html`The catalog is empty; click Sync catalog to download it`}>${apps => html`
       <div class="app-grid">${apps.map(app => html`
         <a class="card app-card" key=${app.id} href=${href(`/store/${app.id}`)}>
           <div class="app-head">
@@ -49,7 +49,7 @@ export default function Store({ query }) {
             </div>
           </div>
           <p>${app.short_desc}</p>
-          <div>${app.installed ? html`<${Badge} tone="green">已安装<//>` : null}</div>
+          <div>${app.installed ? html`<${Badge} tone="green">Installed<//>` : null}</div>
         </a>`)}
       </div>`}
     <//>

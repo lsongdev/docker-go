@@ -23,7 +23,7 @@ export default function StackNew() {
     setSaving(true);
     try {
       await api.createStack({ name, compose, env });
-      toast(`已创建 ${name}`, 'success');
+      toast(`Created ${name}`, 'success');
       if (deploy) await startJob(api, () => api.stackAction(name, 'up')).catch(() => {});
       navigate(`/stacks/${name}`);
     } catch (err) {
@@ -32,19 +32,19 @@ export default function StackNew() {
       setSaving(false);
     }
   };
-  return html`<${Page} title="新建 Stack" actions=${html`<a class="btn" href=${href('/stacks')}>返回</a>`}>
+  return html`<${Page} title="New stack" actions=${html`<a class="button" href=${href('/stacks')}>Back</a>`}>
     <form class="form card" onSubmit=${e => { e.preventDefault(); save(true); }}>
       <${Notice} error=${error} />
-      <${Field} label="名称" required hint="小写字母、数字、- 和 _，用作 compose 项目名">
+      <${Field} label="Name" required hint="Lowercase letters, digits, - and _; the compose project name">
         <input class="input" required pattern="[a-z0-9][a-z0-9_\\-]*" value=${name} onInput=${e => setName(e.target.value)} /><//>
       <div class="grid-2">
         <${Field} label="compose.yaml"><textarea class="input code" spellcheck="false" value=${compose} onInput=${e => setCompose(e.target.value)}></textarea><//>
-        <${Field} label=".env" hint="compose 文件中 \${VAR} 引用的变量"><textarea class="input code" spellcheck="false" value=${env} onInput=${e => setEnv(e.target.value)}></textarea><//>
+        <${Field} label=".env" hint="Variables the compose file refers to as \${VAR}"><textarea class="input code" spellcheck="false" value=${env} onInput=${e => setEnv(e.target.value)}></textarea><//>
       </div>
       <div class="form-actions">
-        <button class="btn btn-primary" disabled=${saving}>保存并部署</button>
-        <button type="button" class="btn" disabled=${saving} onClick=${() => save(false)}>仅保存</button>
-        <a class="btn" href=${href('/stacks')}>取消</a>
+        <button class="button button-primary" disabled=${saving}>Save and deploy</button>
+        <button type="button" class="button" disabled=${saving} onClick=${() => save(false)}>Save only</button>
+        <a class="button" href=${href('/stacks')}>Cancel</a>
       </div>
     </form>
   <//>`;

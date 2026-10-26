@@ -151,22 +151,22 @@ function JobDialog({ api, id, onDone, onClose }) {
     done: final => {
       setJob(final);
       jobWatchers.forEach(w => w());
-      if (final.status === 'succeeded') toast(`${final.title}：完成`, 'success');
+      if (final.status === 'succeeded') toast(`${final.title}: done`, 'success');
       onDone?.(final);
     },
-    onerror: () => setError(new Error('与服务器的连接已断开')),
+    onerror: () => setError(new Error('Lost the connection to the server')),
   }), [id]);
   const running = job?.status === 'running';
   const cancel = () => api.cancelJob(id).catch(toastError);
-  return html`<${Modal} title=${job?.title || '任务'} onClose=${onClose} wide
+  return html`<${Modal} title=${job?.title || 'Job'} onClose=${onClose} wide
     footer=${html`
       ${job ? html`<${Status} state=${job.status} />` : null}
       ${job?.error ? html`<span class="job-error">${job.error}</span>` : null}
       <span class="spacer"></span>
-      ${running ? html`<button class="btn" onClick=${cancel}>取消任务</button>` : null}
-      <button class="btn btn-primary" onClick=${onClose}>${running ? '后台运行' : '关闭'}</button>`}>
+      ${running ? html`<button class="button" onClick=${cancel}>Cancel job</button>` : null}
+      <button class="button button-primary" onClick=${onClose}>${running ? 'Run in background' : 'Close'}</button>`}>
     <${Notice} error=${error} />
-    <${LogView} lines=${lines} empty=${running ? '等待输出…' : '无输出'} />
+    <${LogView} lines=${lines} empty=${running ? 'Waiting for output…' : 'No output'} />
   <//>`;
 }
 
@@ -175,10 +175,10 @@ function JobDialog({ api, id, onDone, onClose }) {
 export function PruneButton({ title, description, allLabel, prune, onDone }) {
   const run = async all => {
     const r = await prune(all);
-    const space = r?.space_reclaimed ? `，释放 ${bytes(r.space_reclaimed)}` : '';
-    toast(`已清理 ${r?.deleted?.length || 0} 项${space}`, 'success');
+    const space = r?.space_reclaimed ? `, ${bytes(r.space_reclaimed)} reclaimed` : '';
+    toast(`Removed ${r?.deleted?.length || 0}${space}`, 'success');
     onDone?.();
   };
-  return html`<${ConfirmButton} label="清理" title=${title} description=${description} checkbox=${allLabel}
-    confirmLabel="清理" danger=${false} onConfirm=${run} />`;
+  return html`<${ConfirmButton} label="Prune" title=${title} description=${description} checkbox=${allLabel}
+    confirmLabel="Prune" danger=${false} onConfirm=${run} />`;
 }

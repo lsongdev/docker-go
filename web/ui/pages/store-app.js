@@ -20,10 +20,10 @@ export function initialValues(fields, current = {}) {
 
 function SecretInput({ value, onInput, required, minLength, maxLength }) {
   const [shown, setShown] = useState(false);
-  return html`<div class="list-editor-row">
+  return html`<div class="list-input-row">
     <input class="input mono" type=${shown ? 'text' : 'password'} autocomplete="new-password"
       value=${value} onInput=${onInput} required=${required} minLength=${minLength} maxLength=${maxLength} />
-    <button type="button" class="btn" onClick=${() => setShown(s => !s)}>${shown ? '隐藏' : '显示'}</button>
+    <button type="button" class="button" onClick=${() => setShown(s => !s)}>${shown ? 'Hide' : 'Show'}</button>
   </div>`;
 }
 
@@ -42,7 +42,7 @@ export function AppForm({ fields, values, errors = {}, onChange }) {
         ${f.options.map(o => html`<option value=${o.value}>${o.label}</option>`)}
       </select>`;
     } else if (f.type === 'boolean') {
-      control = html`<label class="check"><input type="checkbox" checked=${value === 'true'} onChange=${set(key)} />启用</label>`;
+      control = html`<label class="field-check"><input type="checkbox" checked=${value === 'true'} onChange=${set(key)} />Enable</label>`;
     } else if (f.type === 'password') {
       control = html`<${SecretInput} ...${common} minLength=${f.min} maxLength=${f.max} />`;
     } else {
@@ -58,7 +58,7 @@ export function AppForm({ fields, values, errors = {}, onChange }) {
 // DomainField publishes the app at its own HTTPS domain through the panel's
 // reverse proxy; empty keeps it on host:port only.
 export function DomainField({ value, onChange, error }) {
-  return html`<${Field} label="域名" error=${error} hint="通过反向代理以 HTTPS 发布，例如 notes.example.com；留空只通过端口访问">
+  return html`<${Field} label="Domain" error=${error} hint="Publish over HTTPS through the gateway, such as notes.example.com; empty for the port only">
     <input class="input" value=${value} placeholder="app.example.com" onInput=${e => onChange(e.target.value)} /><//>`;
 }
 
@@ -68,8 +68,8 @@ export default function StoreApp({ params }) {
   const d = detail.data;
   return html`<${Page} title=${d?.app.name || params.id}
     subtitle=${d ? `${d.app.version} · ${d.app.author}` : null}
-    actions=${html`${d?.app.installed ? html`<a class="btn btn-primary" href=${href(`/apps/${params.id}`)}>管理应用</a>` : null}
-      <a class="btn" href=${href('/store')}>返回</a>`}>
+    actions=${html`${d?.app.installed ? html`<a class="button button-primary" href=${href(`/apps/${params.id}`)}>Manage app</a>` : null}
+      <a class="button" href=${href('/store')}>Back</a>`}>
     <${Resource} resource=${detail}>${({ app, readme, supported, arch, exposable }) => html`
       <div class="grid-2">
         <div>
@@ -79,21 +79,21 @@ export default function StoreApp({ params }) {
               <div><h2 style="margin:0">${app.name}</h2><div class="muted">${app.short_desc}</div></div>
             </div>
             <${KV} items=${[
-              ['版本', app.version],
-              ['分类', app.categories.join(', ')],
-              ['默认端口', app.port || null],
-              ['架构', app.supported_architectures.join(', ')],
-              ['源码', app.source ? html`<a href=${app.source} target="_blank" rel="noopener noreferrer">${app.source}</a>` : null],
-              ['网站', app.website ? html`<a href=${app.website} target="_blank" rel="noopener noreferrer">${app.website}</a>` : null],
+              ['Version', app.version],
+              ['Categories', app.categories.join(', ')],
+              ['Default port', app.port || null],
+              ['Architectures', app.supported_architectures.join(', ')],
+              ['Source', app.source ? html`<a href=${app.source} target="_blank" rel="noopener noreferrer">${app.source}</a>` : null],
+              ['Website', app.website ? html`<a href=${app.website} target="_blank" rel="noopener noreferrer">${app.website}</a>` : null],
             ]} />
           </div>
-          <div class="card"><h2>介绍</h2><div class="readme">${readme || app.description}</div></div>
+          <div class="card"><h2>About</h2><div class="readme">${readme || app.description}</div></div>
         </div>
         ${app.installed
-          ? html`<div class="card"><${Notice} tone="info">已安装。<a href=${href(`/apps/${app.id}`)}>前往管理</a><//></div>`
+          ? html`<div class="card"><${Notice} tone="info">Installed. <a href=${href(`/apps/${app.id}`)}>Manage it</a><//></div>`
           : supported
             ? html`<${InstallForm} app=${app} exposable=${exposable} />`
-            : html`<div class="card"><${Notice} tone="warn">此应用不支持当前架构（${arch}）<//></div>`}
+            : html`<div class="card"><${Notice} tone="warn">This app does not support this architecture (${arch})<//></div>`}
       </div>`}
     <//>
   <//>`;
@@ -125,13 +125,13 @@ function InstallForm({ app, exposable }) {
     }
   };
   return html`<form class="form card" onSubmit=${submit}>
-    <h2>安装</h2>
+    <h2>Install</h2>
     <${Notice} error=${error} />
-    ${app.port ? html`<${Field} label="访问端口" required hint="应用在主机上监听的端口" error=${errors.port}>
+    ${app.port ? html`<${Field} label="Port" required hint="The port the app listens on on the host" error=${errors.port}>
       <input class="input" type="number" min="1" max="65535" required value=${port} onInput=${e => setPort(e.target.value)} /><//>` : null}
     ${exposable ? html`<${DomainField} value=${domain} onChange=${setDomain} error=${errors.domain} />` : null}
     <${AppForm} fields=${app.form_fields} values=${values} errors=${errors} onChange=${setValues} />
-    ${generated.length ? html`<div class="field-hint">将自动生成：${generated.map(f => html`<${Badge}>${f.label}<//> `)}</div>` : null}
-    <div class="form-actions"><button class="btn btn-primary" disabled=${submitting}>安装 ${app.name}</button></div>
+    ${generated.length ? html`<div class="field-hint">Generated for you: ${generated.map(f => html`<${Badge}>${f.label}<//> `)}</div>` : null}
+    <div class="form-actions"><button class="button button-primary" disabled=${submitting}>Install ${app.name}</button></div>
   </form>`;
 }

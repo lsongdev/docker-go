@@ -1,6 +1,6 @@
 import { html } from '../lib/html.js';
 import { useResource } from '../lib/hooks.js';
-import { Page, Resource, Status, KV } from '../lib/ui.js';
+import { Page, Resource, Status, KV, Table } from '../lib/ui.js';
 import { bytes, datetime } from '../lib/format.js';
 import { usePanel } from '../lib/panel.js';
 import { useDockerEvents } from '../docker.js';
@@ -19,39 +19,39 @@ export default function Dashboard() {
   const system = useResource(signal => api.system({ signal }));
   const installed = useResource(signal => api.apps({ signal }));
   useDockerEvents(['container', 'image'], () => { system.reload(); installed.reload(); });
-  return html`<${Page} title="仪表盘">
+  return html`<${Page} title="Dashboard">
     <${Resource} resource=${system}>${s => html`
       <div class="grid">
-        <${Stat} label="容器" value=${s.containers} sub=${`${s.running} 运行 · ${s.stopped} 停止${s.paused ? ` · ${s.paused} 暂停` : ''}`} to="/containers" />
-        <${Stat} label="镜像" value=${s.images} to="/images" />
-        <${Stat} label="已安装应用" value=${installed.data?.length ?? '—'}
-          sub=${installed.data ? `${installed.data.filter(a => a.status === 'running').length} 运行中` : ''} to="/apps" />
-        <${Stat} label="应用商店" value=${s.catalog_apps} sub=${s.catalog_loaded_at ? `更新于 ${datetime(s.catalog_loaded_at)}` : '尚未同步'} to="/store" />
+        <${Stat} label="Containers" value=${s.containers} sub=${`${s.running} running · ${s.stopped} stopped${s.paused ? ` · ${s.paused} paused` : ''}`} to="/containers" />
+        <${Stat} label="Images" value=${s.images} to="/images" />
+        <${Stat} label="Installed apps" value=${installed.data?.length ?? '—'}
+          sub=${installed.data ? `${installed.data.filter(a => a.status === 'running').length} running` : ''} to="/apps" />
+        <${Stat} label="App store" value=${s.catalog_apps} sub=${s.catalog_loaded_at ? `Updated ${datetime(s.catalog_loaded_at)}` : 'Not synced yet'} to="/store" />
       </div>
       <div class="grid-2 section">
         <div class="card"><h2>Docker</h2>
           <${KV} items=${[
-            ['版本', `${s.version} (API ${s.api_version})`],
+            ['Version', `${s.version} (API ${s.api_version})`],
             ['Compose', s.compose_version],
-            ['主机', s.name],
-            ['系统', s.os],
-            ['内核', s.kernel],
-            ['架构', s.arch],
-            ['CPU / 内存', `${s.cpus} 核 / ${bytes(s.memory)}`],
-            ['存储驱动', s.storage_driver],
-            ['数据目录', html`<code>${s.root_dir}</code>`],
-            ['连接', html`<code>${s.host}</code>`],
+            ['Host', s.name],
+            ['OS', s.os],
+            ['Kernel', s.kernel],
+            ['Architecture', s.arch],
+            ['CPU / memory', `${s.cpus} cores / ${bytes(s.memory)}`],
+            ['Storage driver', s.storage_driver],
+            ['Data directory', html`<code>${s.root_dir}</code>`],
+            ['Endpoint', html`<code>${s.host}</code>`],
           ]} />
         </div>
-        <div class="card"><h2>应用</h2>
-          <${Resource} resource=${installed} empty=${html`还没有安装应用，去 <a href=${href('/store')}>应用商店</a> 看看`}>${list => html`
-            <table class="table"><tbody>
+        <div class="card"><h2>Apps</h2>
+          <${Resource} resource=${installed} empty=${html`No apps installed yet. Have a look in the <a href=${href('/store')}>app store</a>.`}>${list => html`
+            <${Table} framed=${false}><tbody>
               ${list.map(a => html`<tr key=${a.id}>
                 <td><a class="cell-main" href=${href(`/apps/${a.id}`)}>${a.app?.name || a.id}</a></td>
                 <td><${Status} state=${a.status} /></td>
-                <td class="actions">${a.url && a.status === 'running' ? html`<a href=${a.url} target="_blank" rel="noopener">打开 ↗</a>` : null}</td>
+                <td class="actions">${a.url && a.status === 'running' ? html`<a href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}</td>
               </tr>`)}
-            </tbody></table>`}
+            </tbody><//>`}
           <//>
         </div>
       </div>`}

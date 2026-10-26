@@ -1,6 +1,6 @@
 import { html, useMemo, useState } from '../lib/html.js';
 import { useResource, useBusy } from '../lib/hooks.js';
-import { Page, Resource, Badge, Modal, Field, toast, toastError, confirmDanger } from '../lib/ui.js';
+import { Page, Resource, Badge, Modal, Field, toast, toastError, confirmDanger, Table } from '../lib/ui.js';
 import { ago, bytes, shortId } from '../lib/format.js';
 import { usePanel } from '../lib/panel.js';
 import { useDockerEvents, PruneButton, startJob } from '../docker.js';
@@ -16,13 +16,13 @@ function PullDialog({ onClose, onPulled }) {
       onClose();
     } catch {}
   };
-  return html`<${Modal} title="拉取镜像" onClose=${onClose}>
+  return html`<${Modal} title="Pull image" onClose=${onClose}>
     <form class="form" onSubmit=${submit}>
-      <${Field} label="镜像" required hint="不写标签时拉取 latest">
+      <${Field} label="Image" required hint="Without a tag, latest is pulled">
         <input class="input" autofocus required value=${image} onInput=${e => setImage(e.target.value)} placeholder="nginx:alpine" /><//>
-      <${Field} label="平台" hint="可选，例如 linux/amd64；留空使用宿主机平台">
+      <${Field} label="Platform" hint="Optional, such as linux/amd64; empty for the host's">
         <input class="input" value=${platform} onInput=${e => setPlatform(e.target.value)} /><//>
-      <div class="form-actions"><button class="btn btn-primary">拉取</button><button type="button" class="btn" onClick=${onClose}>取消</button></div>
+      <div class="form-actions"><button class="button button-primary">Pull</button><button type="button" class="button" onClick=${onClose}>Cancel</button></div>
     </form>
   <//>`;
 }
@@ -38,39 +38,39 @@ export default function Images({ query }) {
     !search || `${i.tags.join(' ')} ${i.id}`.toLowerCase().includes(search.toLowerCase())), [images.data, search]);
   const remove = img => {
     const label = img.tags[0] || shortId(img.id);
-    if (!confirmDanger(`删除镜像 ${label}？${img.containers.length ? `\n它正被 ${img.containers.length} 个容器使用，将强制删除。` : ''}`)) return;
+    if (!confirmDanger(`Delete the image ${label}?${img.containers.length ? `\n${img.containers.length} containers use it; it is deleted forcibly.` : ''}`)) return;
     run(img.id, async () => {
       await api.removeImage(img.id, img.containers.length > 0);
-      toast(`已删除 ${label}`, 'success');
+      toast(`Deleted ${label}`, 'success');
       images.reload();
     });
   };
   const total = (images.data || []).reduce((n, i) => n + i.size, 0);
-  return html`<${Page} title="镜像" subtitle=${images.data ? `${images.data.length} 个镜像，共 ${bytes(total)}` : null} actions=${html`
-    <${PruneButton} title="清理镜像" description="删除悬空镜像（没有标签且未被使用的镜像层）。"
-      allLabel="同时删除所有未被容器使用的镜像" prune=${api.pruneImages} onDone=${images.reload} />
-    <button class="btn" onClick=${() => navigate('/images/build')}>构建</button>
-    <button class="btn btn-primary" onClick=${() => setPulling(true)}>拉取镜像</button>`}>
+  return html`<${Page} title="Images" subtitle=${images.data ? `${images.data.length} images, ${bytes(total)} in all` : null} actions=${html`
+    <${PruneButton} title="Prune images" description="Delete dangling images (untagged layers no image uses)."
+      allLabel="Also delete every image no container uses" prune=${api.pruneImages} onDone=${images.reload} />
+    <button class="button" onClick=${() => navigate('/images/build')}>Build</button>
+    <button class="button button-primary" onClick=${() => setPulling(true)}>Pull image</button>`}>
     <div class="toolbar">
-      <input class="input" type="search" placeholder="搜索标签或 ID" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
+      <input class="input" type="search" placeholder="Search tags or IDs" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
     </div>
-    <${Resource} resource=${{ ...images, data: images.data && filtered }} empty="没有镜像">${list => html`
-      <div class="table-wrap"><table class="table">
-        <thead><tr><th>标签</th><th>ID</th><th>大小</th><th>使用</th><th>创建</th><th class="actions">操作</th></tr></thead>
+    <${Resource} resource=${{ ...images, data: images.data && filtered }} empty="No images">${list => html`
+      <${Table}>
+        <thead><tr><th>Tags</th><th>ID</th><th>Size</th><th>Used by</th><th>Created</th><th class="actions">Actions</th></tr></thead>
         <tbody>${list.map(img => html`<tr key=${img.id}>
           <td><a class="cell-main" href=${href(`/images/${img.id}`)}>${img.tags[0] || html`<span class="muted">&lt;none&gt;</span>`}</a>
             ${img.tags.length > 1 ? html`<div class="cell-sub">${img.tags.slice(1).join(', ')}</div>` : null}</td>
           <td><code>${shortId(img.id)}</code></td>
           <td class="nowrap">${bytes(img.size)}</td>
-          <td>${img.containers.length ? html`<${Badge} tone="blue" title=${img.containers.join('\n')}>${img.containers.length} 个容器<//>`
-            : img.dangling ? html`<${Badge}>悬空<//>` : html`<span class="muted">未使用</span>`}</td>
+          <td>${img.containers.length ? html`<${Badge} tone="blue" title=${img.containers.join('\n')}>${img.containers.length} containers<//>`
+            : img.dangling ? html`<${Badge}>Dangling<//>` : html`<span class="muted">Unused</span>`}</td>
           <td class="nowrap">${ago(img.created)}</td>
-          <td class="actions"><span class="btn-group">
-            <a class="btn btn-sm" href=${href('/containers/new', { image: img.tags[0] || img.id })}>运行</a>
-            <button class="btn btn-sm btn-danger" disabled=${busy[img.id]} onClick=${() => remove(img)}>删除</button>
+          <td class="actions"><span class="button-row">
+            <a class="button button-small" href=${href('/containers/new', { image: img.tags[0] || img.id })}>Run</a>
+            <button class="button button-small button-danger" disabled=${busy[img.id]} onClick=${() => remove(img)}>Delete</button>
           </span></td>
         </tr>`)}</tbody>
-      </table></div>`}
+      <//>`}
     <//>
     ${pulling ? html`<${PullDialog} onClose=${() => setPulling(false)} onPulled=${images.reload} />` : null}
   <//>`;
