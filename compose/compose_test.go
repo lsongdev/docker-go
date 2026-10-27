@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"context"
 	"errors"
 	"testing"
 )
@@ -68,5 +69,13 @@ func TestProjectArgs(t *testing.T) {
 		if got[i] != want[i] {
 			t.Fatalf("args = %v", got)
 		}
+	}
+}
+
+func TestZeroCLIWithoutCompose(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+	var cli CLI
+	if _, err := cli.Version(context.Background()); err == nil {
+		t.Fatal("Version succeeded without compose installed")
 	}
 }

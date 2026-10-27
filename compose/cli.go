@@ -20,23 +20,48 @@ import (
 	"sync"
 )
 
-// CLI runs docker compose commands.
+// CLI runs docker compose commands. The zero CLI locates compose on first
+// use and keeps looking while none is installed, so its commands fail until
+// Docker is installed and then work without a restart.
 type CLI struct {
+	mu      sync.Mutex
 	command []string // e.g. ["docker", "compose"] or ["docker-compose"]
 }
 
 // NewCLI locates the compose plugin (`docker compose`) or the standalone
 // `docker-compose` binary.
 func NewCLI() (*CLI, error) {
+	command := locate()
+	if command == nil {
+		return nil, errors.New("compose: neither `docker compose` nor `docker-compose` is available")
+	}
+	return &CLI{command: command}, nil
+}
+
+func locate() []string {
 	if docker, err := exec.LookPath("docker"); err == nil {
 		if exec.Command(docker, "compose", "version").Run() == nil {
-			return &CLI{command: []string{docker, "compose"}}, nil
+			return []string{docker, "compose"}
 		}
 	}
 	if standalone, err := exec.LookPath("docker-compose"); err == nil {
-		return &CLI{command: []string{standalone}}, nil
+		return []string{standalone}
 	}
-	return nil, errors.New("compose: neither `docker compose` nor `docker-compose` is available")
+	return nil
+}
+
+// find returns the compose command, or docker-compose (which then fails as
+// not found) while none is installed.
+func (c *CLI) find() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.command == nil {
+		c.command = locate()
+	}
+	if c.command == nil {
+		return []string{"docker-compose"}
+	}
+	return c.command
 }
 
 // Version returns the compose version string.
@@ -68,12 +93,13 @@ func (p Project) args() []string {
 }
 
 func (c *CLI) cmd(ctx context.Context, p *Project, args ...string) *exec.Cmd {
-	all := append([]string{}, c.command[1:]...)
+	command := c.find()
+	all := append([]string{}, command[1:]...)
 	if p != nil {
 		all = append(all, p.args()...)
 	}
 	all = append(all, args...)
-	cmd := exec.CommandContext(ctx, c.command[0], all...)
+	cmd := exec.CommandContext(ctx, command[0], all...)
 	configureCancel(cmd)
 	cmd.Env = os.Environ()
 	if p != nil {

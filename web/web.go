@@ -98,8 +98,8 @@ func New(ctx context.Context, opts Options) (*Docker, error) {
 	}
 	cli, err := compose.NewCLI()
 	if err != nil {
-		eng.Close()
-		return nil, err
+		logger.Warn("docker compose unavailable; stacks and apps fail until it is installed", "err", err)
+		cli = &compose.CLI{}
 	}
 
 	// Jobs outlive requests; Close stops them.
