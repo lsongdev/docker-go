@@ -16,10 +16,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"maps"
 	"net"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -169,6 +171,21 @@ func compareVersions(a, b string) int {
 // ErrUnavailable wraps failures to reach the daemon at all (as opposed to
 // errors the daemon reports), so callers can tell "Docker is down" apart.
 var ErrUnavailable = errors.New("docker daemon unavailable")
+
+// NotInstalled reports whether err, a failure to reach the daemon, is because
+// Docker is not installed here at all: its socket does not exist and neither
+// docker nor dockerd is on PATH.
+func NotInstalled(err error) bool {
+	if !errors.Is(err, ErrUnavailable) || !errors.Is(err, fs.ErrNotExist) {
+		return false
+	}
+	for _, name := range []string{"dockerd", "docker"} {
+		if _, err := exec.LookPath(name); err == nil {
+			return false
+		}
+	}
+	return true
+}
 
 // Error is a non-2xx response from the daemon.
 type Error struct {

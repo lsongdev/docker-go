@@ -80,6 +80,8 @@ func fail(w http.ResponseWriter, err error) {
 		default:
 			writeError(w, http.StatusBadGateway, "docker_error", engineErr.Message)
 		}
+	case engine.NotInstalled(err):
+		writeError(w, http.StatusServiceUnavailable, "docker_not_installed", "Docker is not installed on this server")
 	case errors.Is(err, engine.ErrUnavailable):
 		writeError(w, http.StatusServiceUnavailable, "docker_unavailable", err.Error())
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):

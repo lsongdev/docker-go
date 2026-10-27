@@ -288,12 +288,23 @@ func TestImageReferencesWithSlashes(t *testing.T) {
 }
 
 func TestDaemonDownIsServiceUnavailable(t *testing.T) {
-	client, _ := engine.New(engine.Config{Host: "unix://" + filepath.Join(t.TempDir(), "missing.sock")})
+	// A short path: a temporary directory can exceed the socket path limit.
+	client, _ := engine.New(engine.Config{Host: "unix:///nonexistent/docker.sock"})
 	srv := httptest.NewServer((&Server{Engine: client}).Handler())
 	defer srv.Close()
+	bin := t.TempDir()
+	t.Setenv("PATH", bin)
 	status, e := call(t, "GET", srv.URL+"/containers", "")
+	if status != 503 || e.Error == nil || e.Error.Code != "docker_not_installed" {
+		t.Fatalf("without docker: status %d error %+v", status, e.Error)
+	}
+	// Installed but not running.
+	if err := os.WriteFile(filepath.Join(bin, "docker"), []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	status, e = call(t, "GET", srv.URL+"/containers", "")
 	if status != 503 || e.Error == nil || e.Error.Code != "docker_unavailable" {
-		t.Fatalf("status %d error %+v", status, e.Error)
+		t.Fatalf("with docker: status %d error %+v", status, e.Error)
 	}
 }
 

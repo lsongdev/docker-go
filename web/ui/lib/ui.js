@@ -22,6 +22,15 @@ export function Page({ title, subtitle, actions, children }) {
 const variants = { error: 'danger', warn: 'warning', success: 'success', info: 'info' };
 
 export function Notice({ error, tone = 'error', children }) {
+  if (!children && error?.code === 'docker_not_installed') return html`<${Alert} variant="info">
+    <strong>Docker is not installed on this server.</strong>
+    ${' '}Install <a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener">Docker Engine</a> with
+    the Compose plugin, and these pages start working without a restart.
+  <//>`;
+  if (!children && error?.code === 'docker_unavailable') return html`<${Alert} variant="warning">
+    <strong>The Docker daemon is not running.</strong> Start it, for example with <code>systemctl start docker</code>.
+    <div class="small muted">${error.message}</div>
+  <//>`;
   return html`<${Alert} variant=${variants[tone]} error=${error}>${children}<//>`;
 }
 
