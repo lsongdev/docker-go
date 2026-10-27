@@ -161,11 +161,11 @@ function Terminal({ id }) {
     const root = ref.current.getRootNode();
     const target = root instanceof ShadowRoot ? root : document.head;
     if (!root.querySelector('link[data-xterm]')) {
-      const link = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: new URL('../vendor/xterm.css', import.meta.url).href });
+      const link = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: new URL('../node_modules/@xterm/xterm/css/xterm.css', import.meta.url).href });
       link.dataset.xterm = '';
       target.append(link);
     }
-    Promise.all([import('../vendor/xterm.mjs'), import('../vendor/addon-fit.mjs')]).then(([{ Terminal }, { FitAddon }]) => {
+    Promise.all([import('../node_modules/@xterm/xterm/lib/xterm.mjs'), import('../node_modules/@xterm/addon-fit/lib/addon-fit.mjs')]).then(([{ Terminal }, { FitAddon }]) => {
       if (disposed) return;
       const term = new Terminal({ cursorBlink: true, fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 13, theme: { background: '#000000' } });
       const fit = new FitAddon();

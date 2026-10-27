@@ -4,7 +4,7 @@
   "title": "Docker",
   "icon": "◧",
   "entry": "module.js",
-  "styles": ["vendor/stylesheets.css", "style.css", "docker.css"],
+  "styles": ["stylesheets.css", "style.css", "docker.css"],
   "home": "/",
   "nav": [
     { "path": "/", "title": "Dashboard", "icon": "◎", "group": "Overview" },
