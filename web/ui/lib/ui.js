@@ -1,6 +1,7 @@
 // UI building blocks for the pages: the @lsongdev/scripts components (in
 // vendor/scripts), under the names and tone vocabulary the pages use.
-import { html } from './html.js';
+import { html, useContext } from './html.js';
+import { PanelContext } from './panel.js';
 import {
   Alert, Badge as ScriptsBadge, Dialog, Loading, Empty, PageHeader, KeyValue, toast as show,
 } from '../vendor/scripts/react/components/index.js';
@@ -22,11 +23,17 @@ export function Page({ title, subtitle, actions, children }) {
 const variants = { error: 'danger', warn: 'warning', success: 'success', info: 'info' };
 
 export function Notice({ error, tone = 'error', children }) {
-  if (!children && error?.code === 'docker_not_installed') return html`<${Alert} variant="info">
-    <strong>Docker is not installed on this server.</strong>
-    ${' '}Install <a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener">Docker Engine</a> with
-    the Compose plugin, and these pages start working without a restart.
-  <//>`;
+  const panel = useContext(PanelContext); // null outside a page
+  if (!children && error?.code === 'docker_not_installed') {
+    // The panel's package manager, when mounted, installs it in one step.
+    const install = panel?.link?.('packages', '/recommended');
+    return html`<${Alert} variant="info">
+      <strong>Docker is not installed on this server.</strong>${' '}
+      ${install ? html`<a href=${install}>Install Docker</a> from Packages, ` : html`Install
+        <a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener">Docker Engine</a> with the Compose plugin, `}
+      and these pages start working without a restart.
+    <//>`;
+  }
   if (!children && error?.code === 'docker_unavailable') return html`<${Alert} variant="warning">
     <strong>The Docker daemon is not running.</strong> Start it, for example with <code>systemctl start docker</code>.
     <div class="small muted">${error.message}</div>
