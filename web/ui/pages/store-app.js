@@ -68,8 +68,8 @@ export default function StoreApp({ params }) {
   const d = detail.data;
   return html`<${Page} title=${d?.app.name || params.id}
     subtitle=${d ? `${d.app.version} · ${d.app.author}` : null}
-    actions=${html`${d?.app.installed ? html`<a class="button button-primary" href=${href(`/apps/${params.id}`)}>Manage app</a>` : null}
-      <a class="button" href=${href('/store')}>Back</a>`}>
+    back=${{ href: href('/store'), label: 'App store' }}
+    actions=${html`${d?.app.installed ? html`<a class="button button-primary" href=${href(`/apps/${params.id}`)}>Manage app</a>` : null}`}>
     <${Resource} resource=${detail}>${({ app, readme, supported, arch, exposable }) => html`
       <div class="grid-2">
         <div>

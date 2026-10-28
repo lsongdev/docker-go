@@ -32,7 +32,7 @@ export default function ContainerNew({ query }) {
       setSubmitting(false);
     }
   };
-  return html`<${Page} title="New container" actions=${html`<a class="button" href=${href('/containers')}>Back</a>`}>
+  return html`<${Page} title="New container" back=${{ href: href('/containers'), label: 'Containers' }}>
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
       <div class="form-grid">

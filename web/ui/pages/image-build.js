@@ -27,7 +27,7 @@ export default function ImageBuild() {
     } catch (err) { setError(err); }
   };
   const switchSource = source => setForm(f => ({ ...f, source, dockerfile: source === 'dockerfile' ? sample : '' }));
-  return html`<${Page} title="Build image" actions=${html`<a class="button" href=${href('/images')}>Back</a>`}>
+  return html`<${Page} title="Build image" back=${{ href: href('/images'), label: 'Images' }}>
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
       <${Field} label="Tag" required hint="Such as myapp:1.0">

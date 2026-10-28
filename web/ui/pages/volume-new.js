@@ -19,7 +19,7 @@ export default function VolumeNew() {
       navigate('/volumes');
     } catch (err) { setError(err); }
   };
-  return html`<${Page} title="New volume" actions=${html`<a class="button" href=${href('/volumes')}>Back</a>`}>
+  return html`<${Page} title="New volume" back=${{ href: href('/volumes'), label: 'Volumes' }}>
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
       <div class="form-grid">

@@ -15,7 +15,7 @@ export default function NetworkNew() {
       navigate(`/networks/${n.id}`);
     } catch (err) { setError(err); }
   };
-  return html`<${Page} title="New network" actions=${html`<a class="button" href=${href('/networks')}>Back</a>`}>
+  return html`<${Page} title="New network" back=${{ href: href('/networks'), label: 'Networks' }}>
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
       <div class="form-grid">

@@ -14,8 +14,8 @@ export default function Container({ params, query }) {
   const c = container.data;
   return html`<${Page} title=${c?.name || shortId(params.id)}
     subtitle=${c ? html`<${Status} state=${c.state} /> ${c.image}` : null}
-    actions=${c ? html`<${ContainerActions} c=${c} onChange=${r => r === 'removed' ? navigate('/containers') : container.reload()} />
-      <a class="button" href=${href('/containers')}>Back</a>` : null}>
+    back=${{ href: href('/containers'), label: 'Containers' }}
+    actions=${c ? html`<${ContainerActions} c=${c} onChange=${r => r === 'removed' ? navigate('/containers') : container.reload()} />` : null}>
     <${Resource} resource=${container}>${c => html`
       <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t })} tabs=${[['overview', 'Overview'], ['logs', 'Logs'], ['stats', 'Stats'], ['terminal', 'Terminal']]} />
       ${tab === 'overview' ? html`<${Overview} c=${c} />` : null}

@@ -22,6 +22,7 @@ export default function App({ params, query }) {
   const running = a && (a.status === 'running' || a.status === 'partial');
   return html`<${Page} title=${a?.app?.name || params.id}
     subtitle=${a ? html`<${Status} state=${a.status} /> Version ${a.version}` : null}
+    back=${{ href: href('/apps'), label: 'Installed apps' }}
     actions=${a ? html`
       ${a.url && a.status === 'running' ? html`<a class="button button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
       ${running
@@ -29,8 +30,7 @@ export default function App({ params, query }) {
         : html`<button class="button" onClick=${() => act('start')}>Start</button>`}
       ${a.update_available ? html`<button class="button" onClick=${update}>Update to ${a.latest_version}</button>` : null}
       <${ConfirmButton} label="Uninstall" title=${`Uninstall ${a.app?.name || a.id}`} confirmLabel="Uninstall"
-        description="Stop the app and delete its containers and networks." checkbox="Keep the data directory and volumes for a later reinstall" onConfirm=${uninstall} />
-      <a class="button" href=${href('/apps')}>Back</a>` : null}>
+        description="Stop the app and delete its containers and networks." checkbox="Keep the data directory and volumes for a later reinstall" onConfirm=${uninstall} />` : null}>
     <${Resource} resource=${app}>${a => html`
       ${a.app ? null : html`<${Notice} tone="warn">This app was removed from the catalog. It can still be started, stopped and uninstalled, but not updated or reconfigured.<//>`}
       <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t })} tabs=${[['overview', 'Overview'], ['settings', 'Settings']]} />

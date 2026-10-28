@@ -16,6 +16,7 @@ export default function Stack({ params, query }) {
   }).catch(() => {}); // startJob already reported the error
   return html`<${Page} title=${params.name}
     subtitle=${s ? html`<${Status} state=${s.status} /> <span class="mono">${s.dir}</span>` : null}
+    back=${{ href: href('/stacks'), label: 'Compose' }}
     actions=${s ? html`
       <button class="button button-primary" onClick=${() => act('up')}>Deploy</button>
       ${s.status !== 'inactive' ? html`
@@ -24,8 +25,7 @@ export default function Stack({ params, query }) {
         <button class="button" onClick=${() => act('down')}>Down</button>` : null}
       <button class="button" onClick=${() => act('pull')}>Pull images</button>
       ${s.managed ? html`<${ConfirmButton} label="Delete" title=${`Delete ${params.name}`} confirmLabel="Delete"
-        description="Stop the stack, delete its containers and networks, and remove the project directory." checkbox="Also delete its volumes (their data is lost for good)" onConfirm=${remove} />` : null}
-      <a class="button" href=${href('/stacks')}>Back</a>` : null}>
+        description="Stop the stack, delete its containers and networks, and remove the project directory." checkbox="Also delete its volumes (their data is lost for good)" onConfirm=${remove} />` : null}` : null}>
     <${Resource} resource=${stack}>${s => html`
       ${s.managed ? null : html`<${Notice} tone="info">This project was created outside this module, so its files are read-only; it can still be deployed, stopped and so on.<//>`}
       <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t })} tabs=${[['services', `Services (${s.services.length})`], ['config', 'Configuration']]} />

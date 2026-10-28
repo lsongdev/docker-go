@@ -32,7 +32,7 @@ export default function StackNew() {
       setSaving(false);
     }
   };
-  return html`<${Page} title="New stack" actions=${html`<a class="button" href=${href('/stacks')}>Back</a>`}>
+  return html`<${Page} title="New stack" back=${{ href: href('/stacks'), label: 'Compose' }}>
     <form class="form card" onSubmit=${e => { e.preventDefault(); save(true); }}>
       <${Notice} error=${error} />
       <${Field} label="Name" required hint="Lowercase letters, digits, - and _; the compose project name">

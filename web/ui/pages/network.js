@@ -19,8 +19,8 @@ export default function Network({ params }) {
     } catch (err) { toastError(err); }
   };
   return html`<${Page} title=${n?.name || shortId(params.id)} subtitle=${n ? html`<code>${n.id}</code>` : null}
-    actions=${html`${n && !n.builtin ? html`<button class="button button-danger" onClick=${remove}>Delete</button>` : null}
-      <a class="button" href=${href('/networks')}>Back</a>`}>
+    back=${{ href: href('/networks'), label: 'Networks' }}
+    actions=${html`${n && !n.builtin ? html`<button class="button button-danger" onClick=${remove}>Delete</button>` : null}`}>
     <${Resource} resource=${network}>${n => html`
       <div class="grid-2">
         <div class="card"><h2>Configuration</h2>

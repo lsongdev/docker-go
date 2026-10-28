@@ -18,10 +18,10 @@ export default function Image({ params }) {
   };
   const img = image.data;
   return html`<${Page} title=${img?.tags[0] || shortId(params.id)} subtitle=${img ? html`<code>${img.id}</code>` : null}
+    back=${{ href: href('/images'), label: 'Images' }}
     actions=${img ? html`
       <a class="button button-primary" href=${href('/containers/new', { image: img.tags[0] || img.id })}>Run container</a>
-      <button class="button button-danger" onClick=${remove}>Delete</button>
-      <a class="button" href=${href('/images')}>Back</a>` : null}>
+      <button class="button button-danger" onClick=${remove}>Delete</button>` : null}>
     <${Resource} resource=${image}>${img => html`
       <div class="grid-2">
         <div class="card"><h2>Details</h2>
