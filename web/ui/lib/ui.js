@@ -3,7 +3,7 @@
 import { html, useContext } from './html.js';
 import { PanelContext } from './panel.js';
 import {
-  Alert, Badge as ScriptsBadge, Dialog, Loading, Empty, KeyValue, toast as show,
+  Alert, Badge as ScriptsBadge, Dialog, Loading, Empty, KeyValue, PageHeader, toast as show,
 } from '../node_modules/@lsongdev/scripts/react/components/index.js';
 
 export {
@@ -12,17 +12,10 @@ export {
 } from '../node_modules/@lsongdev/scripts/react/components/index.js';
 export { KeyValue as KV };
 
-// Page-level navigation has its own slot, separate from metadata/actions.
+// Page-level navigation (back) has its own slot, separate from metadata/actions.
 export function Page({ title, subtitle, actions, back, children }) {
   return html`<section class="page">
-    <header class=${back ? 'page-header page-header-with-back' : 'page-header'}>
-      <div class="page-title">
-        <h1>${title}</h1>
-        ${subtitle ? html`<div class="page-subtitle">${subtitle}</div>` : null}
-      </div>
-      ${actions ? html`<div class="page-actions">${actions}</div>` : null}
-      ${back ? html`<a class="page-back" href=${back.href} title=${back.label || 'Back'}><span aria-hidden="true">←</span> ${back.label || 'Back'}</a>` : null}
-    </header>
+    <${PageHeader} title=${title} subtitle=${subtitle} actions=${actions} back=${back} />
     ${children}
   </section>`;
 }

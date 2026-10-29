@@ -1,0 +1,23 @@
+/* Standalone frame: the sidebar (sidebar.css and menu.css) beside the
+   module, or above it on narrow screens. A panel shell provides its own
+   frame instead. */
+@import url(node_modules/@lsongdev/stylesheets/menu.css);
+@import url(node_modules/@lsongdev/stylesheets/sidebar.css);
+:root {
+  --sidebar-width: 220px;
+  --menu-vertical-font-size: 14px;
+  --menu-vertical-item-padding: 7px 8px;
+  --menu-vertical-item-margin: 1px 0;
+  --menu-vertical-item-radius: 6px;
+}
+.layout { display: flex; min-height: 100dvh; }
+.layout-nav { display: contents; }
+.layout .sidebar { position: sticky; top: 0; height: 100dvh; padding: 0 12px 12px; }
+.layout .menu-vertical { padding: 8px 0; }
+.layout .sidebar-brand { padding: 0 8px; justify-content: flex-start; }
+.main { flex: 1; min-width: 0; padding: 24px 28px 48px; }
+@media (max-width: 768px) {
+  .layout { flex-direction: column; }
+  .layout .sidebar { height: auto; padding: 0 16px; }
+  .main { padding: 16px 16px 40px; }
+}
