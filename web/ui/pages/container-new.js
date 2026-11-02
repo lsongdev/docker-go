@@ -35,25 +35,25 @@ export default function ContainerNew({ query }) {
   return html`<${Page} title="New container" back=${{ href: href('/containers'), label: 'Containers' }}>
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
-      <div class="form-grid">
+      <div class="docker-create-fields">
         <${Field} label="Image" required hint="Such as nginx:alpine; pulled if not present">
           <input class="input" required value=${form.image} onInput=${set('image')} placeholder="nginx:alpine" /><//>
         <${Field} label="Name" hint="Empty for a generated one">
           <input class="input" value=${form.name} onInput=${set('name')} pattern="[a-zA-Z0-9][a-zA-Z0-9_.\\-]*" /><//>
       </div>
-      <div class="form-grid">
+      <div class="docker-create-fields">
         <${Field} label="Ports" hint="host:container[/protocol], such as 8080:80 or 127.0.0.1:5432:5432">
           <${ListInput} values=${form.ports} onChange=${setList('ports')} placeholder="8080:80" /><//>
         <${Field} label="Mounts" hint="host path or volume:container path[:ro]">
           <${ListInput} values=${form.volumes} onChange=${setList('volumes')} placeholder="/srv/data:/data" /><//>
       </div>
-      <div class="form-grid">
+      <div class="docker-create-fields">
         <${Field} label="Environment" hint="KEY=VALUE">
           <${ListInput} values=${form.env} onChange=${setList('env')} placeholder="TZ=Asia/Shanghai" /><//>
         <${Field} label="Labels" hint="KEY=VALUE">
           <${ListInput} values=${form.labels} onChange=${setList('labels')} placeholder="com.example.role=web" /><//>
       </div>
-      <div class="form-grid">
+      <div class="docker-create-fields">
         <${Field} label="Restart policy">
           <select class="input" value=${form.restart} onChange=${set('restart')}>
             <option value="no">Never</option><option value="always">Always</option>
@@ -71,7 +71,7 @@ export default function ContainerNew({ query }) {
       </div>
       <details>
         <summary class="field-label">Advanced</summary>
-        <div class="form-grid" style="margin-top:12px">
+        <div class="docker-create-fields" style="margin-top:12px">
           <${Field} label="Command" hint="Overrides the image CMD; quotes work"><input class="input mono" value=${form.command} onInput=${set('command')} /><//>
           <${Field} label="Entrypoint" hint="Overrides the image ENTRYPOINT"><input class="input mono" value=${form.entrypoint} onInput=${set('entrypoint')} /><//>
           <${Field} label="Working directory"><input class="input" value=${form.working_dir} onInput=${set('working_dir')} /><//>

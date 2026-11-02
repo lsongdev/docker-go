@@ -18,14 +18,14 @@ export default function NetworkNew() {
   return html`<${Page} title="New network" back=${{ href: href('/networks'), label: 'Networks' }}>
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
-      <div class="form-grid">
+      <div class="docker-create-fields">
         <${Field} label="Name" required><input class="input" required value=${form.name} onInput=${set('name')} /><//>
         <${Field} label="Driver">
           <select class="input" value=${form.driver} onChange=${set('driver')}>
             ${['bridge', 'macvlan', 'ipvlan', 'overlay'].map(d => html`<option value=${d}>${d}</option>`)}
           </select><//>
       </div>
-      <div class="form-grid">
+      <div class="docker-create-fields">
         <${Field} label="Subnet" hint="A CIDR; empty to assign one"><input class="input mono" value=${form.subnet} onInput=${set('subnet')} placeholder="172.30.0.0/16" /><//>
         <${Field} label="Gateway"><input class="input mono" value=${form.gateway} onInput=${set('gateway')} placeholder="172.30.0.1" /><//>
         <${Field} label="IP range" hint="The CIDR within the subnet to assign from"><input class="input mono" value=${form.ip_range} onInput=${set('ip_range')} /><//>

@@ -22,11 +22,11 @@ export default function VolumeNew() {
   return html`<${Page} title="New volume" back=${{ href: href('/volumes'), label: 'Volumes' }}>
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
-      <div class="form-grid">
+      <div class="docker-create-fields">
         <${Field} label="Name" hint="Empty for a random name"><input class="input" value=${name} onInput=${e => setName(e.target.value)} /><//>
         <${Field} label="Driver"><input class="input" value=${driver} onInput=${e => setDriver(e.target.value)} /><//>
       </div>
-      <div class="form-grid">
+      <div class="docker-create-fields">
         <${Field} label="Driver options" hint="KEY=VALUE; for NFS, for example: type=nfs, o=addr=10.0.0.2,rw, device=:/export">
           <${ListInput} values=${options} onChange=${setOptions} placeholder="type=nfs" /><//>
         <${Field} label="Labels" hint="KEY=VALUE"><${ListInput} values=${labels} onChange=${setLabels} /><//>

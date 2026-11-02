@@ -18,3 +18,5 @@
 .chip.active { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
 .readme { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 13.5px; }
 .secret { display: inline-flex; gap: 6px; align-items: center; }
+
+.docker-create-fields { display: flex; flex-direction: column; gap: 16px; }
