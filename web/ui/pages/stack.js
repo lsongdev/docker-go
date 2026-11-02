@@ -80,7 +80,7 @@ function Editor({ stack, onSaved }) {
         <textarea class="input code" spellcheck="false" readOnly=${readOnly} value=${compose} onInput=${e => setCompose(e.target.value)}></textarea><//>
       <${Field} label=".env"><textarea class="input code" spellcheck="false" readOnly=${readOnly} value=${env} onInput=${e => setEnv(e.target.value)}></textarea><//>
     </div>
-    ${readOnly ? null : html`<div class="form-actions">
+    ${readOnly ? null : html`<div class="button-actions">
       <button class="button button-primary" disabled=${!dirty || saving} onClick=${() => save(true)}>Save and redeploy</button>
       <button class="button" disabled=${!dirty || saving} onClick=${() => save(false)}>Save only</button>
       ${dirty ? html`<button class="button button-ghost" onClick=${() => { setCompose(stack.compose); setEnv(stack.env); }}>Discard changes</button>` : null}

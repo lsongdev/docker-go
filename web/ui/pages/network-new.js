@@ -30,12 +30,12 @@ export default function NetworkNew() {
         <${Field} label="Gateway"><input class="input mono" value=${form.gateway} onInput=${set('gateway')} placeholder="172.30.0.1" /><//>
         <${Field} label="IP range" hint="The CIDR within the subnet to assign from"><input class="input mono" value=${form.ip_range} onInput=${set('ip_range')} /><//>
       </div>
-      <div class="form-actions">
+      <div class="button-actions">
         <label class="field-check"><input type="checkbox" checked=${form.internal} onChange=${set('internal')} />Internal (no outside access)</label>
         <label class="field-check"><input type="checkbox" checked=${form.attachable} onChange=${set('attachable')} />Attachable</label>
         <label class="field-check"><input type="checkbox" checked=${form.ipv6} onChange=${set('ipv6')} />Enable IPv6</label>
       </div>
-      <div class="form-actions"><button class="button button-primary">Create</button><a class="button" href=${href('/networks')}>Cancel</a></div>
+      <div class="button-actions"><button class="button button-primary">Create</button><a class="button" href=${href('/networks')}>Cancel</a></div>
     </form>
   <//>`;
 }

@@ -20,7 +20,7 @@ export default function Stacks() {
           <td><${Status} state=${s.status} /></td>
           <td class="cell-sub">${s.containers || '—'}</td>
           <td class="truncate mono" style="max-width:320px" title=${s.config_files.join('\n')}>${s.config_files[0] || '—'}</td>
-          <td class="actions"><span class="button-row">
+          <td class="actions"><span class="row-actions">
             ${s.status === 'running' || s.status === 'partial'
               ? html`<button class="button button-small" onClick=${() => act(s.name, 'restart')}>Restart</button>
                      <button class="button button-small" onClick=${() => act(s.name, 'stop')}>Stop</button>`

@@ -26,7 +26,7 @@ export default function Apps() {
             ${a.update_available ? html`<${Badge} tone="blue">Update available<//>` : null}
             ${a.app ? null : html`<${Badge} tone="amber">Removed from the catalog<//>`}
           </div>
-          <div class="form-actions">
+          <div class="button-actions">
             ${a.url && a.status === 'running' ? html`<a class="button button-small button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
             <a class="button button-small" href=${href(`/apps/${a.id}`)}>Manage</a>
           </div>

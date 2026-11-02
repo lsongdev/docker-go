@@ -41,8 +41,8 @@ export default function StackNew() {
         <${Field} label="compose.yaml"><textarea class="input code" spellcheck="false" value=${compose} onInput=${e => setCompose(e.target.value)}></textarea><//>
         <${Field} label=".env" hint="Variables the compose file refers to as \${VAR}"><textarea class="input code" spellcheck="false" value=${env} onInput=${e => setEnv(e.target.value)}></textarea><//>
       </div>
-      <div class="form-actions">
-        <button class="button button-primary" disabled=${saving}>Save and deploy</button>
+      <div class="button-actions">
+        <button class="button button-primary" disabled=${saving}>Deploy</button>
         <button type="button" class="button" disabled=${saving} onClick=${() => save(false)}>Save only</button>
         <a class="button" href=${href('/stacks')}>Cancel</a>
       </div>

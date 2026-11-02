@@ -111,6 +111,6 @@ function Settings({ a, exposable, onSaved }) {
       <input class="input" type="number" min="1" max="65535" required value=${port} onInput=${e => setPort(e.target.value)} /><//>` : null}
     ${exposable || a.domain ? html`<${DomainField} value=${domain} onChange=${setDomain} error=${errors.domain} />` : null}
     <${AppForm} fields=${fields} values=${values} errors=${errors} onChange=${setValues} />
-    <div class="form-actions"><button class="button button-primary">Save and redeploy</button></div>
+    <div class="button-actions"><button class="button button-primary">Save and redeploy</button></div>
   </form>`;
 }

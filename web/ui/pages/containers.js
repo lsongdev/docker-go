@@ -28,7 +28,7 @@ export function ContainerActions({ c, onChange, compact }) {
   };
   const size = compact ? 'button button-small' : 'button';
   const running = c.state === 'running', paused = c.state === 'paused';
-  return html`<span class="button-row">
+  return html`<span class=${compact ? 'row-actions' : 'page-actions'}>
     ${running ? html`
       <button class=${size} disabled=${busy.stop} onClick=${() => act('stop', 'stopped')}>Stop</button>
       <button class=${size} disabled=${busy.restart} onClick=${() => act('restart', 'restarted')}>Restart</button>

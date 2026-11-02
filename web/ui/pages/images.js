@@ -22,7 +22,7 @@ function PullDialog({ onClose, onPulled }) {
         <input class="input" autofocus required value=${image} onInput=${e => setImage(e.target.value)} placeholder="nginx:alpine" /><//>
       <${Field} label="Platform" hint="Optional, such as linux/amd64; empty for the host's">
         <input class="input" value=${platform} onInput=${e => setPlatform(e.target.value)} /><//>
-      <div class="form-actions"><button class="button button-primary">Pull</button><button type="button" class="button" onClick=${onClose}>Cancel</button></div>
+      <div class="button-actions"><button class="button button-primary">Pull</button><button type="button" class="button" onClick=${onClose}>Cancel</button></div>
     </form>
   <//>`;
 }
@@ -65,7 +65,7 @@ export default function Images({ query }) {
           <td>${img.containers.length ? html`<${Badge} tone="blue" title=${img.containers.join('\n')}>${img.containers.length} containers<//>`
             : img.dangling ? html`<${Badge}>Dangling<//>` : html`<span class="muted">Unused</span>`}</td>
           <td class="nowrap">${ago(img.created)}</td>
-          <td class="actions"><span class="button-row">
+          <td class="actions"><span class="row-actions">
             <a class="button button-small" href=${href('/containers/new', { image: img.tags[0] || img.id })}>Run</a>
             <button class="button button-small button-danger" disabled=${busy[img.id]} onClick=${() => remove(img)}>Delete</button>
           </span></td>
