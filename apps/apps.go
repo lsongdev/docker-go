@@ -509,7 +509,9 @@ func (m *Manager) apply(ctx context.Context, plan *Plan, out func(string)) error
 		return err
 	}
 	if app := plan.App; app.UID != nil && app.GID != nil {
-		chownData(filepath.Join(dir, "data"), *app.UID, *app.GID, out)
+		if err := chownData(filepath.Join(dir, "data"), *app.UID, *app.GID, out); err != nil {
+			return fmt.Errorf("prepare app data: %w", err)
+		}
 	}
 	opts := compose.UpOptions{}
 	if plan.App.ForcePull {
@@ -606,16 +608,21 @@ func copyFile(src, dst string) error {
 
 // chownData hands the data directory to the uid/gid the app runs as. It
 // needs root; otherwise it is skipped with a note.
-func chownData(dir string, uid, gid int, out func(string)) {
-	if os.Geteuid() != 0 {
-		out(fmt.Sprintf("Skipping chown of data to %d:%d (not running as root)", uid, gid))
-		return
+func chownData(dir string, uid, gid int, out func(string)) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
 	}
-	filepath.WalkDir(dir, func(p string, _ fs.DirEntry, err error) error {
-		if err == nil {
-			os.Lchown(p, uid, gid)
+	if os.Geteuid() != 0 {
+		if out != nil {
+			out(fmt.Sprintf("Skipping chown of data to %d:%d (not running as root)", uid, gid))
 		}
 		return nil
+	}
+	return filepath.WalkDir(dir, func(p string, _ fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		return os.Lchown(p, uid, gid)
 	})
 }
 

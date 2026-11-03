@@ -3,6 +3,7 @@
 // lib/.
 import { html, useEffect, useRef, useState } from './lib/html.js';
 import { usePanel } from './lib/panel.js';
+import { useResource } from './lib/hooks.js';
 import { ConfirmButton, LogView, Modal, Notice, Status, openDialog, toast, toastError } from './lib/ui.js';
 import { bytes } from './lib/format.js';
 
@@ -142,20 +143,19 @@ export function openJob(api, id, onDone) {
 }
 
 function JobDialog({ api, id, onDone, onClose }) {
-  const [job, setJob] = useState(null);
-  const [lines, setLines] = useState([]);
-  const [error, setError] = useState(null);
-  useEffect(() => api.stream(`jobs/${enc(id)}/events`, null, {
-    snapshot: s => { setJob(s.job); setLines(s.lines); },
-    line: line => setLines(l => [...l, line]),
-    done: final => {
-      setJob(final);
-      jobWatchers.forEach(w => w());
-      if (final.status === 'succeeded') toast(`${final.title}: done`, 'success');
-      onDone?.(final);
-    },
-    onerror: () => setError(new Error('Lost the connection to the server')),
-  }), [id]);
+  const result = useResource(signal => api.job(id, { signal }), [id], {
+    interval: data => !data || data.job.status === 'running' ? 1000 : 0,
+  });
+  const job = result.data?.job;
+  const lines = result.data?.lines || [];
+  const notified = useRef(null);
+  useEffect(() => {
+    if (!job || job.status === 'running' || notified.current === job.id) return;
+    notified.current = job.id;
+    jobWatchers.forEach(w => w());
+    if (job.status === 'succeeded') toast(`${job.title}: done`, 'success');
+    onDone?.(job);
+  }, [job?.id, job?.status]);
   const running = job?.status === 'running';
   const cancel = () => api.cancelJob(id).catch(toastError);
   return html`<${Modal} title=${job?.title || 'Job'} onClose=${onClose} wide
@@ -165,8 +165,8 @@ function JobDialog({ api, id, onDone, onClose }) {
       <span class="spacer"></span>
       ${running ? html`<button class="button" onClick=${cancel}>Cancel job</button>` : null}
       <button class="button button-primary" onClick=${onClose}>${running ? 'Run in background' : 'Close'}</button>`}>
-    <${Notice} error=${error} />
-    <${LogView} lines=${lines} empty=${running ? 'Waiting for output…' : 'No output'} />
+    <${Notice} error=${result.error} />
+    <${LogView} lines=${lines} empty=${!job ? 'Loading job…' : running ? 'Waiting for output…' : 'No output'} />
   <//>`;
 }
 

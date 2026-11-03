@@ -97,8 +97,16 @@ func (c *Catalog) Sync(ctx context.Context, out func(string)) error {
 	if c.repo == "" {
 		return c.Load()
 	}
+	if out != nil {
+		out("Syncing app catalog")
+	}
 	if c.checkedOut(ctx) {
-		if err := git(ctx, out, "-C", c.dir, "pull", "--ff-only", "--depth", "1"); err != nil {
+		if _, err := os.Stat(filepath.Join(c.dir, ".git", "shallow")); err == nil {
+			if err := git(ctx, out, "-C", c.dir, "fetch", "--unshallow", "origin"); err != nil {
+				return err
+			}
+		}
+		if err := git(ctx, out, "-C", c.dir, "pull", "--ff-only"); err != nil {
 			return err
 		}
 	} else {

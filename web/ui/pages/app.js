@@ -8,7 +8,7 @@ import { AppIcon } from './store.js';
 import { AppForm, DomainField, initialValues } from './store-app.js';
 
 export default function App({ params, query }) {
-  const { api, href, navigate, setQuery } = usePanel();
+  const { api, navigate, setQuery } = usePanel();
   const res = useResource(signal => api.app(params.id, { signal }), [params.id]);
   const app = { ...res, data: res.data?.app };
   useDockerEvents(['container'], app.reload, 800);
@@ -22,7 +22,6 @@ export default function App({ params, query }) {
   const running = a && (a.status === 'running' || a.status === 'partial');
   return html`<${Page} title=${a?.app?.name || params.id}
     subtitle=${a ? html`<${Status} state=${a.status} /> Version ${a.version}` : null}
-    back=${{ href: href('/apps'), label: 'Installed apps' }}
     actions=${a ? html`
       ${a.url && a.status === 'running' ? html`<a class="button button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
       ${running

@@ -1,4 +1,4 @@
-import { html, useState } from '../lib/html.js';
+import { html, useRef, useState } from '../lib/html.js';
 import { useResource } from '../lib/hooks.js';
 import { Page, Resource, Field, Notice, Badge, KV } from '../lib/ui.js';
 import { usePanel } from '../lib/panel.js';
@@ -66,10 +66,10 @@ export default function StoreApp({ params }) {
   const { api, href } = usePanel();
   const detail = useResource(signal => api.catalogApp(params.id, { signal }), [params.id]);
   const d = detail.data;
+  const [submitting, setSubmitting] = useState(false);
   return html`<${Page} title=${d?.app.name || params.id}
     subtitle=${d ? `${d.app.version} · ${d.app.author}` : null}
-    back=${{ href: href('/store'), label: 'App store' }}
-    actions=${html`${d?.app.installed ? html`<a class="button button-primary" href=${href(`/apps/${params.id}`)}>Manage app</a>` : null}`}>
+    actions=${d ? d.app.installed ? html`<a class="button button-primary" href=${href(`/apps/${params.id}`)}>Manage app</a>` : html`<button class="button button-primary" type="submit" form="app-install" disabled=${!d.supported || submitting}>${submitting ? 'Installing…' : 'Install'}</button>` : null}>
     <${Resource} resource=${detail}>${({ app, readme, supported, arch, exposable }) => html`
       <div class="grid-2">
         <div>
@@ -92,24 +92,26 @@ export default function StoreApp({ params }) {
         ${app.installed
           ? html`<div class="card"><${Notice} tone="info">Installed. <a href=${href(`/apps/${app.id}`)}>Manage it</a><//></div>`
           : supported
-            ? html`<${InstallForm} app=${app} exposable=${exposable} />`
+            ? html`<${InstallForm} app=${app} exposable=${exposable} submitting=${submitting} setSubmitting=${setSubmitting} />`
             : html`<div class="card"><${Notice} tone="warn">This app does not support this architecture (${arch})<//></div>`}
       </div>`}
     <//>
   <//>`;
 }
 
-function InstallForm({ app, exposable }) {
+function InstallForm({ app, exposable, submitting, setSubmitting }) {
   const { api, navigate } = usePanel();
   const [values, setValues] = useState(() => initialValues(app.form_fields));
   const [port, setPort] = useState(app.port || '');
   const [domain, setDomain] = useState('');
   const [errors, setErrors] = useState({});
   const [error, setError] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const pending = useRef(false);
   const generated = app.form_fields.filter(f => f.type === 'random');
   const submit = async e => {
     e.preventDefault();
+    if (pending.current) return;
+    pending.current = true;
     setErrors({});
     setError(null);
     setSubmitting(true);
@@ -121,10 +123,11 @@ function InstallForm({ app, exposable }) {
       setErrors(err.fields || {});
       setError(err.fields && Object.keys(err.fields).length ? null : err);
     } finally {
+      pending.current = false;
       setSubmitting(false);
     }
   };
-  return html`<form class="form card" onSubmit=${submit}>
+  return html`<form id="app-install" class="form card" onSubmit=${submit}>
     <h2>Install</h2>
     <${Notice} error=${error} />
     ${app.port ? html`<${Field} label="Port" required hint="The port the app listens on on the host" error=${errors.port}>

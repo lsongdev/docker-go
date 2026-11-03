@@ -266,3 +266,14 @@ func TestFileStore(t *testing.T) {
 		t.Fatalf("deleting a missing record: %v", err)
 	}
 }
+
+func TestChownDataCreatesMissingDirectory(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "data")
+	if err := chownData(dir, os.Geteuid(), os.Getegid(), func(string) {}); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(dir)
+	if err != nil || !info.IsDir() {
+		t.Fatalf("data directory was not prepared: %v", err)
+	}
+}

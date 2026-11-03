@@ -7,14 +7,13 @@ import { useDockerEvents } from '../docker.js';
 import { ContainerActions } from './containers.js';
 
 export default function Container({ params, query }) {
-  const { api, href, navigate, setQuery } = usePanel();
+  const { api, navigate, setQuery } = usePanel();
   const container = useResource(signal => api.container(params.id, { signal }), [params.id]);
   useDockerEvents(['container'], e => { if (params.id.startsWith(e.id) || e.id.startsWith(params.id)) container.reload(); });
   const tab = query.tab || 'overview';
   const c = container.data;
   return html`<${Page} title=${c?.name || shortId(params.id)}
     subtitle=${c ? html`<${Status} state=${c.state} /> ${c.image}` : null}
-    back=${{ href: href('/containers'), label: 'Containers' }}
     actions=${c ? html`<${ContainerActions} c=${c} onChange=${r => r === 'removed' ? navigate('/containers') : container.reload()} />` : null}>
     <${Resource} resource=${container}>${c => html`
       <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t })} tabs=${[['overview', 'Overview'], ['logs', 'Logs'], ['stats', 'Stats'], ['terminal', 'Terminal']]} />

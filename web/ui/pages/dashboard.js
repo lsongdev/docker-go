@@ -19,7 +19,7 @@ export default function Dashboard() {
   const system = useResource(signal => api.system({ signal }));
   const installed = useResource(signal => api.apps({ signal }));
   useDockerEvents(['container', 'image'], () => { system.reload(); installed.reload(); });
-  return html`<${Page} title="Dashboard">
+  return html`<${Page} title="Overview">
     <${Resource} resource=${system}>${s => html`
       <div class="grid">
         <${Stat} label="Containers" value=${s.containers} sub=${`${s.running} running · ${s.stopped} stopped${s.paused ? ` · ${s.paused} paused` : ''}`} to="/containers" />

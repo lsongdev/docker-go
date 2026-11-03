@@ -196,3 +196,36 @@ func TestSyncRecoversFromBrokenCheckout(t *testing.T) {
 		t.Fatalf("Len = %d", c.Len())
 	}
 }
+
+func TestSyncRepairsTruncatedShallowHistory(t *testing.T) {
+	src := writeCatalog(t, map[string]string{"web/manifest.json": `{"name":"Web","available":true}`, "web/docker-compose.yml": compose})
+	run := func(dir string, args ...string) {
+		t.Helper()
+		if out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %s", args, out)
+		}
+	}
+	run(src, "init", "-q")
+	run(src, "add", ".")
+	commit := func() { run(src, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "update") }
+	commit()
+	dir := filepath.Join(t.TempDir(), "catalog")
+	c := New(dir, "file://"+src)
+	if err := c.Sync(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	os.WriteFile(filepath.Join(src, "note"), []byte("new version"), 0644)
+	run(src, "add", ".")
+	commit()
+	run(dir, "fetch", "--depth", "1", "origin")
+	var logs []string
+	if err := c.Sync(context.Background(), func(line string) { logs = append(logs, line) }); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "note")); err != nil {
+		t.Fatal(err)
+	}
+	if len(logs) == 0 {
+		t.Fatal("no sync output")
+	}
+}

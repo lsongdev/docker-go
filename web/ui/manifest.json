@@ -7,7 +7,7 @@
   "styles": ["stylesheets.css", "style.css", "docker.css"],
   "home": "/",
   "nav": [
-    { "path": "/", "title": "Dashboard", "icon": "◎", "group": "Overview" },
+    { "path": "/", "title": "Overview", "icon": "◎", "group": "Overview" },
     { "path": "/containers", "title": "Containers", "icon": "▣", "group": "Resources" },
     { "path": "/images", "title": "Images", "icon": "◫", "group": "Resources" },
     { "path": "/volumes", "title": "Volumes", "icon": "⛁", "group": "Resources" },
