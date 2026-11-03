@@ -24,7 +24,7 @@ export default function Volumes({ query }) {
   return html`<${Page} title="Volumes" actions=${html`
     <${PruneButton} title="Prune volumes" description="Delete every anonymous volume no container uses. Their data is lost for good."
       allLabel="Also delete unused named volumes" prune=${api.pruneVolumes} onDone=${volumes.reload} />
-    <button class="button button-primary" onClick=${() => navigate('/volumes/new')}>New volume</button>`}>
+    <button class="button button-small button-primary" onClick=${() => navigate('/volumes/new')}>New volume</button>`}>
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search names or projects" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
     </div>

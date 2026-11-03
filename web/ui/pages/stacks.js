@@ -10,7 +10,7 @@ export default function Stacks() {
   useDockerEvents(['container'], stacks.reload, 800);
   const act = (name, action) => startJob(api, () => api.stackAction(name, action), { onDone: stacks.reload }).catch(() => {});
   return html`<${Page} title="Compose" subtitle="Multi-container applications run with docker compose"
-    actions=${html`<button class="button button-primary" onClick=${() => navigate('/stacks/new')}>New stack</button>`}>
+    actions=${html`<button class="button button-small button-primary" onClick=${() => navigate('/stacks/new')}>New stack</button>`}>
     <${Resource} resource=${stacks} empty="No compose projects yet">${list => html`
       <${Table}>
         <thead><tr><th>Name</th><th>Status</th><th>Containers</th><th>Compose file</th><th class="actions">Actions</th></tr></thead>

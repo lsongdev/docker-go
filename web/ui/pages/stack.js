@@ -5,7 +5,7 @@ import { usePanel } from '../lib/panel.js';
 import { useDockerEvents, startJob } from '../docker.js';
 
 export default function Stack({ params, query }) {
-  const { api, href, navigate, setQuery } = usePanel();
+  const { api, navigate, setQuery } = usePanel();
   const stack = useResource(signal => api.stack(params.name, { signal }), [params.name]);
   useDockerEvents(['container'], stack.reload, 800);
   const tab = query.tab || 'services';
@@ -16,15 +16,14 @@ export default function Stack({ params, query }) {
   }).catch(() => {}); // startJob already reported the error
   return html`<${Page} title=${params.name}
     subtitle=${s ? html`<${Status} state=${s.status} /> <span class="mono">${s.dir}</span>` : null}
-    back=${{ href: href('/stacks'), label: 'Compose' }}
     actions=${s ? html`
-      <button class="button button-primary" onClick=${() => act('up')}>Deploy</button>
+      <button class="button button-small button-primary" onClick=${() => act('up')}>Deploy</button>
       ${s.status !== 'inactive' ? html`
-        <button class="button" onClick=${() => act('restart')}>Restart</button>
-        <button class="button" onClick=${() => act('stop')}>Stop</button>
-        <button class="button" onClick=${() => act('down')}>Down</button>` : null}
-      <button class="button" onClick=${() => act('pull')}>Pull images</button>
-      ${s.managed ? html`<${ConfirmButton} label="Delete" title=${`Delete ${params.name}`} confirmLabel="Delete"
+        <button class="button button-small" onClick=${() => act('restart')}>Restart</button>
+        <button class="button button-small" onClick=${() => act('stop')}>Stop</button>
+        <button class="button button-small" onClick=${() => act('down')}>Down</button>` : null}
+      <button class="button button-small" onClick=${() => act('pull')}>Pull images</button>
+      ${s.managed ? html`<${ConfirmButton} className="button button-small" label="Delete" title=${`Delete ${params.name}`} confirmLabel="Delete"
         description="Stop the stack, delete its containers and networks, and remove the project directory." checkbox="Also delete its volumes (their data is lost for good)" onConfirm=${remove} />` : null}` : null}>
     <${Resource} resource=${stack}>${s => html`
       ${s.managed ? null : html`<${Notice} tone="info">This project was created outside this module, so its files are read-only; it can still be deployed, stopped and so on.<//>`}

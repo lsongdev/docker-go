@@ -156,3 +156,11 @@ it on its own. Shared components are in `web/ui/lib`; Preact, htm and
 xterm.js are vendored in `web/ui/vendor`. The UI works offline and under a
 strict Content-Security-Policy, and its styles follow a panel's `--panel-*`
 theme variables when mounted.
+
+Application detail pages use `/apps/:id` both before and after installation.
+The app store and installed list share this page, including catalog information,
+installation fields, live status, containers, credentials, and settings.
+Installation and removal update the page in place. Older `/store/:id` links
+render the same page. `GET /apps/{id}` returns nullable `app` (installation)
+and `catalog` fields, plus `installed`, `readme`, `arch`, `supported`, and
+`exposable`. Installed apps removed from the catalog remain manageable.

@@ -1,75 +1,102 @@
 import { html, useState } from '../lib/html.js';
 import { useResource } from '../lib/hooks.js';
-import { Page, Resource, Status, KV, Tabs, Field, Notice, Badge, ConfirmButton, Table } from '../lib/ui.js';
+import { Page, Resource, Status, KV, Tabs, Field, Notice, Badge, ConfirmButton } from '../lib/ui.js';
 import { datetime } from '../lib/format.js';
 import { usePanel } from '../lib/panel.js';
 import { useDockerEvents, startJob } from '../docker.js';
 import { AppIcon } from './store.js';
-import { AppForm, DomainField, initialValues } from './store-app.js';
+import { AppForm, DomainField, initialValues, InstallForm } from '../components/app-form.js';
 
 export default function App({ params, query }) {
+  return html`<${AppDetail} key=${params.id} id=${params.id} query=${query} />`;
+}
+
+function AppDetail({ id, query }) {
   const { api, navigate, setQuery } = usePanel();
-  const res = useResource(signal => api.app(params.id, { signal }), [params.id]);
-  const app = { ...res, data: res.data?.app };
-  useDockerEvents(['container'], app.reload, 800);
-  const tab = query.tab || 'overview';
-  const a = app.data;
-  const act = action => startJob(api, () => api.appAction(params.id, action), { onDone: app.reload }).catch(() => {});
-  const update = () => startJob(api, () => api.updateApp(params.id), { onDone: app.reload }).catch(() => {});
-  const uninstall = keepData => startJob(api, () => api.uninstallApp(params.id, keepData), {
-    onDone: job => job.status === 'succeeded' && navigate('/apps'),
+  const detail = useResource(signal => api.app(id, { signal }), [id], { interval: 5000 });
+  useDockerEvents(['container'], detail.reload, 800);
+  const [submitting, setSubmitting] = useState(false);
+  const d = detail.data;
+  const a = d?.app;
+  const metadata = d?.catalog;
+  const secrets = (a?.app?.form_fields || []).filter(f => f.type === 'random' || f.type === 'password');
+  const tab = query.tab === 'settings' || (query.tab === 'credentials' && secrets.length) ? query.tab : 'readme';
+  const act = action => startJob(api, () => api.appAction(id, action), { onDone: detail.reload }).catch(() => {});
+  const update = () => startJob(api, () => api.updateApp(id), { onDone: detail.reload }).catch(() => {});
+  const uninstall = keepData => startJob(api, () => api.uninstallApp(id, keepData), {
+    onDone: job => {
+      if (job.status !== 'succeeded') return detail.reload();
+      if (!metadata) return navigate('/apps');
+      detail.reload();
+      setQuery({ tab: '' });
+    },
   }).catch(() => {});
   const running = a && (a.status === 'running' || a.status === 'partial');
-  return html`<${Page} title=${a?.app?.name || params.id}
-    subtitle=${a ? html`<${Status} state=${a.status} /> Version ${a.version}` : null}
-    actions=${a ? html`
-      ${a.url && a.status === 'running' ? html`<a class="button button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
+  return html`<${Page} title=${metadata?.name || a?.app?.name || id}
+    actions=${!d ? null : !a ? html`<button class="button button-small button-primary" type="button" onClick=${() => setQuery({ tab: 'settings' })} disabled=${!d.supported || submitting}>${submitting ? 'Installing…' : 'Install'}</button>` : html`
+      ${a.url && a.status === 'running' ? html`<a class="button button-small button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
       ${running
-        ? html`<button class="button" onClick=${() => act('restart')}>Restart</button><button class="button" onClick=${() => act('stop')}>Stop</button>`
-        : html`<button class="button" onClick=${() => act('start')}>Start</button>`}
-      ${a.update_available ? html`<button class="button" onClick=${update}>Update to ${a.latest_version}</button>` : null}
-      <${ConfirmButton} label="Uninstall" title=${`Uninstall ${a.app?.name || a.id}`} confirmLabel="Uninstall"
-        description="Stop the app and delete its containers and networks." checkbox="Keep the data directory and volumes for a later reinstall" onConfirm=${uninstall} />` : null}>
-    <${Resource} resource=${app}>${a => html`
-      ${a.app ? null : html`<${Notice} tone="warn">This app was removed from the catalog. It can still be started, stopped and uninstalled, but not updated or reconfigured.<//>`}
-      <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t })} tabs=${[['overview', 'Overview'], ['settings', 'Settings']]} />
-      ${tab === 'overview' ? html`<${Overview} a=${a} />` : html`<${Settings} a=${a} exposable=${res.data.exposable} onSaved=${app.reload} />`}`}
-    <//>
+        ? html`<button class="button button-small" disabled=${submitting} onClick=${() => act('restart')}>Restart</button><button class="button button-small" disabled=${submitting} onClick=${() => act('stop')}>Stop</button>`
+        : html`<button class="button button-small" disabled=${submitting} onClick=${() => act('start')}>Start</button>`}
+      ${a.update_available ? html`<button class="button button-small" onClick=${update}>Update to ${a.latest_version}</button>` : null}
+      <${ConfirmButton} className="button button-small" label="Uninstall" title=${`Uninstall ${metadata?.name || id}`} confirmLabel="Uninstall"
+        description="Stop the app and delete its containers and networks." checkbox="Keep the data directory and volumes for a later reinstall" onConfirm=${uninstall} />`}>
+    <${Resource} resource=${detail}>${d => html`
+      ${d.installed && !d.catalog ? html`<${Notice} tone="warn">This app was removed from the catalog. It can still be started, stopped and uninstalled, but not updated or reconfigured.<//>` : null}
+      <${AppSummary} id=${id} metadata=${d.catalog} a=${d.app} />
+      <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t === 'readme' ? '' : t })}
+        tabs=${[['readme', 'README'], ['settings', d.installed ? 'Settings' : 'Install'], ...(secrets.length ? [['credentials', 'Credentials']] : [])]} />
+      <div hidden=${tab !== 'readme'}>
+        <div class="card"><div class="readme">${d.readme || d.catalog?.description || 'No README available.'}</div></div>
+      </div>
+      <div hidden=${tab !== 'settings'}>
+        ${d.installed ? html`<${Settings} key=${id} a=${d.app} exposable=${d.exposable} onSaved=${detail.reload} />`
+          : d.supported ? html`<${InstallForm} key=${id} app=${d.catalog} exposable=${d.exposable} submitting=${submitting} setSubmitting=${setSubmitting} onDone=${detail.reload} />`
+          : html`<div class="card"><${Notice} tone="warn">This app does not support this architecture (${d.arch})<//></div>`}
+      </div>
+      ${secrets.length ? html`<div hidden=${tab !== 'credentials'}><div class="card"><h2>Credentials</h2>
+        <${KV} items=${secrets.map(f => [f.label, html`<${Secret} value=${d.app.values[f.env_variable]} />`])} />
+      </div></div>` : null}
+    `}<//>
   <//>`;
 }
 
-function Overview({ a }) {
+function AppSummary({ id, metadata, a }) {
   const { href } = usePanel();
-  const secrets = (a.app?.form_fields || []).filter(f => f.type === 'random' || f.type === 'password');
-  return html`<div class="grid-2">
-    <div class="card">
-      <div class="app-head" style="margin-bottom:14px">
-        <${AppIcon} id=${a.id} large />
-        <div><h2 style="margin:0">${a.app?.name || a.id}</h2><div class="muted">${a.app?.short_desc}</div></div>
+  return html`<div class="card app-summary">
+    <div class="app-head">
+      <${AppIcon} id=${id} large />
+      <div class="app-identity"><h2>${metadata?.name || a?.app?.name || id}</h2>
+        ${a ? html`<${Status} state=${a.status} />` : null}
+        <div class="muted">${metadata?.short_desc}</div>
       </div>
-      <${KV} items=${[
+    </div>
+    <${KV} items=${[
+      ...(a ? [
         ['URL', a.url ? html`<a href=${a.url} target="_blank" rel="noopener">${a.url}</a>` : null],
-        ['Domain', a.domain || null],
-        ['Port', a.port || null],
+        ['Domain', a.domain || null], ['Port', a.port || null],
         ['Version', html`${a.version} ${a.update_available ? html`<${Badge} tone="blue">Latest ${a.latest_version}<//>` : null}`],
-        ['Installed', datetime(a.installed_at)],
-        ['Updated', datetime(a.updated_at)],
-        ['Directory', html`<code>${a.dir}</code>`],
         ['Compose', html`<a href=${href(`/stacks/${a.id}`)}>${a.id}</a>`],
-      ]} />
-    </div>
-    <div>
-      <div class="card"><h2>Containers</h2>
-        ${a.containers.length ? html`<${Table} framed=${false}><tbody>${a.containers.map(c => html`<tr key=${c.id}>
-          <td><a href=${href(`/containers/${c.id}`)}>${c.name}</a><div class="cell-sub">${c.image}</div></td>
-          <td><${Status} state=${c.state} title=${c.status} /></td>
-        </tr>`)}</tbody><//>` : html`<span class="muted">No containers; click Start to create them</span>`}
-      </div>
-      ${secrets.length ? html`<div class="card"><h2>Credentials</h2>
-        <${KV} items=${secrets.map(f => [f.label, html`<${Secret} value=${a.values[f.env_variable]} />`])} />
-      </div>` : null}
-    </div>
+        ['Containers', html`<${Containers} a=${a} />`],
+      ] : [['Version', metadata?.version], ['Default port', metadata?.port || null]]),
+      ['Author', metadata?.author], ['Categories', metadata?.categories?.join(', ')],
+      ['Architectures', metadata?.supported_architectures?.join(', ')],
+      ['Source', metadata?.source ? html`<a href=${metadata.source} target="_blank" rel="noopener noreferrer">${metadata.source}</a>` : null],
+      ['Website', metadata?.website ? html`<a href=${metadata.website} target="_blank" rel="noopener noreferrer">${metadata.website}</a>` : null],
+      ...(a ? [
+        ['Installed', datetime(a.installed_at)], ['Updated', datetime(a.updated_at)],
+        ['Directory', html`<code>${a.dir}</code>`],
+      ] : []),
+    ]} />
   </div>`;
+}
+
+function Containers({ a }) {
+  const { href } = usePanel();
+  return a.containers.length ? html`<div class="app-containers">${a.containers.map(c => html`<div key=${c.id}>
+    <div class="row-actions"><a href=${href(`/containers/${c.id}`)}>${c.name}</a><${Status} state=${c.state} title=${c.status} /></div>
+    <div class="cell-sub">${c.image}</div>
+  </div>`)}</div>` : html`<span class="muted">No containers; click Start to create them</span>`;
 }
 
 function Secret({ value }) {

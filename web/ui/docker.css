@@ -10,6 +10,11 @@
 .app-card { display: flex; flex-direction: column; gap: 10px; }
 .app-card p { margin: 0; color: var(--muted); flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .app-head { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.app-summary { display: grid; gap: 20px; }
+.app-summary + .tabs { margin-top: 16px; }
+.app-identity, .app-containers { min-width: 0; overflow-wrap: anywhere; }
+.app-containers { display: grid; gap: 8px; }
+.app-summary .app-identity h2 { margin: 0 0 4px; }
 .app-head h3 { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
 .app-icon { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 10px; object-fit: cover; background: var(--surface-2); border: 1px solid var(--border); }
 .app-icon-lg { width: 72px; height: 72px; flex-basis: 72px; border-radius: 14px; }

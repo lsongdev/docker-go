@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/lsongdev/docker-go/apps"
@@ -96,7 +97,7 @@ func TestErrorMapping(t *testing.T) {
 		{"POST", "/volumes", `{"name":"x","bogus":1}`, 400, "invalid_request"},
 		{"POST", "/containers", `{"image":""}`, 400, "invalid_request"},
 		{"GET", "/catalog/missing", "", 404, "not_found"},
-		{"GET", "/apps/notes", "", 404, "not_found"},
+		{"GET", "/apps/missing", "", 404, "not_found"},
 		{"GET", "/jobs/zzz", "", 404, "not_found"},
 	} {
 		status, e := call(t, tc.method, srv.URL+tc.path, tc.body)
@@ -311,4 +312,96 @@ func TestDaemonDownIsServiceUnavailable(t *testing.T) {
 func newApps(t *testing.T, cat *catalog.Catalog, client *engine.Client) *apps.Manager {
 	root := t.TempDir()
 	return apps.NewManager(root, apps.NewFileStore(root), cat, nil, client, apps.Settings{})
+}
+
+func TestAppDetailBeforeAndAfterInstallation(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "notes"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := filepath.Join(dir, "notes/manifest.json")
+	os.WriteFile(manifest, []byte(`{"name":"Notes","available":true,"port":9000,"supported_architectures":["amd64"]}`), 0644)
+	os.WriteFile(filepath.Join(dir, "notes/docker-compose.yml"), []byte("services: {}\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "notes/README.md"), []byte("App introduction"), 0644)
+	cat := catalog.New(dir, "")
+	if err := cat.Load(); err != nil {
+		t.Fatal(err)
+	}
+	d, client := enginetest.New(t)
+	d.JSON("GET /version", engine.Version{Arch: "amd64"})
+	var daemonFailure atomic.Bool
+	d.Mux.HandleFunc("GET /containers/json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if daemonFailure.Load() {
+			w.WriteHeader(500)
+			w.Write([]byte(`{"message":"daemon failure"}`))
+			return
+		}
+		w.Write([]byte("[]"))
+	})
+	root := t.TempDir()
+	store := apps.NewFileStore(root)
+	server := &Server{Engine: client, Catalog: cat, Apps: apps.NewManager(root, store, cat, nil, client, apps.Settings{})}
+	srv := httptest.NewServer(server.Handler())
+	defer srv.Close()
+	type detail struct {
+		App       *apps.Installed `json:"app"`
+		Catalog   *catalog.App    `json:"catalog"`
+		Readme    string          `json:"readme"`
+		Installed bool            `json:"installed"`
+		Supported bool            `json:"supported"`
+	}
+	get := func() detail {
+		t.Helper()
+		status, e := call(t, "GET", srv.URL+"/apps/notes", "")
+		if status != 200 {
+			t.Fatalf("detail status=%d error=%+v", status, e.Error)
+		}
+		var result detail
+		if err := json.Unmarshal(e.Data, &result); err != nil {
+			t.Fatal(err)
+		}
+		return result
+	}
+	before := get()
+	if before.Installed || before.App != nil || before.Catalog == nil || !before.Supported || before.Readme != "App introduction" {
+		t.Fatalf("before install: %+v", before)
+	}
+	if err := store.PutApp(context.Background(), apps.Record{ID: "notes", Version: "1", Port: 9000}); err != nil {
+		t.Fatal(err)
+	}
+	after := get()
+	if !after.Installed || after.App == nil || after.Catalog == nil || after.App.Port != 9000 || after.Readme != before.Readme {
+		t.Fatalf("after install: %+v", after)
+	}
+	// Removing a catalog entry must not hide an installed app's controls.
+	os.MkdirAll(filepath.Join(dir, "other"), 0755)
+	os.WriteFile(filepath.Join(dir, "other/manifest.json"), []byte(`{"name":"Other","available":true}`), 0644)
+	os.WriteFile(filepath.Join(dir, "other/docker-compose.yml"), []byte("services: {}\n"), 0644)
+	os.Remove(manifest)
+	if err := cat.Load(); err != nil {
+		t.Fatal(err)
+	}
+	removed := get()
+	if !removed.Installed || removed.App == nil || removed.Catalog != nil {
+		t.Fatalf("removed template: %+v", removed)
+	}
+	os.WriteFile(manifest, []byte(`{"name":"Notes","available":true,"supported_architectures":["arm64"]}`), 0644)
+	if err := cat.Load(); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.DeleteApp(context.Background(), "notes"); err != nil {
+		t.Fatal(err)
+	}
+	uninstalled := get()
+	if uninstalled.Installed || uninstalled.App != nil || uninstalled.Catalog == nil || uninstalled.Supported {
+		t.Fatalf("after uninstall / unsupported arch: %+v", uninstalled)
+	}
+	// Engine errors are not misrepresented as an uninstalled app.
+	store.PutApp(context.Background(), apps.Record{ID: "notes", Version: "1"})
+	daemonFailure.Store(true)
+	status, _ := call(t, "GET", srv.URL+"/apps/notes", "")
+	if status == 200 {
+		t.Fatal("daemon failure was hidden")
+	}
 }

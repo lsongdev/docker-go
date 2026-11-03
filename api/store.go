@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 
@@ -92,13 +93,40 @@ func (s *Server) listApps(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, list)
 }
 
+// getApp describes one app before or after installation. An installed app
+// remains manageable even if its catalog entry has been removed.
 func (s *Server) getApp(w http.ResponseWriter, r *http.Request) {
-	app, err := s.Apps.Get(r.Context(), r.PathValue("id"))
-	if err != nil {
+	id := r.PathValue("id")
+	installed, err := s.Apps.Get(r.Context(), id)
+	if err != nil && !errors.Is(err, apps.ErrNotInstalled) {
 		fail(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"app": app, "exposable": s.Apps.CanExpose() && app.App != nil && app.App.Exposable})
+	template, err := s.Catalog.Get(id)
+	if err != nil && (!errors.Is(err, catalog.ErrNotFound) || installed == nil) {
+		fail(w, err)
+		return
+	}
+	readme, arch := "", ""
+	supported, exposable := false, false
+	if template != nil {
+		readme, err = s.Catalog.Readme(id)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		arch, err = s.Apps.Arch(r.Context())
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		supported = template.SupportsArch(arch)
+		exposable = s.Apps.CanExpose() && template.Exposable
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"app": installed, "catalog": template, "readme": readme,
+		"installed": installed != nil, "arch": arch, "supported": supported, "exposable": exposable,
+	})
 }
 
 type installRequest struct {

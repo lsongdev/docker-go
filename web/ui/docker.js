@@ -56,7 +56,6 @@ export function dockerAPI(client) {
 
     catalog: (query, opts) => get('catalog', { ...opts, query }),
     categories: opts => get('catalog/categories', opts),
-    catalogApp: (id, opts) => get(`catalog/${enc(id)}`, opts),
     iconURL: id => client.url(`catalog/${enc(id)}/icon`).href,
     syncCatalog: () => post('catalog/sync'),
 
@@ -179,6 +178,6 @@ export function PruneButton({ title, description, allLabel, prune, onDone }) {
     toast(`Removed ${r?.deleted?.length || 0}${space}`, 'success');
     onDone?.();
   };
-  return html`<${ConfirmButton} label="Prune" title=${title} description=${description} checkbox=${allLabel}
+  return html`<${ConfirmButton} className="button button-small" label="Prune" title=${title} description=${description} checkbox=${allLabel}
     confirmLabel="Prune" danger=${false} onConfirm=${run} />`;
 }

@@ -28,7 +28,7 @@ export default function Store({ query }) {
   const loadedAt = catalog.data?.loaded_at;
   const synced = loadedAt && !loadedAt.startsWith('0001');
   return html`<${Page} title="App store" subtitle=${synced ? `Catalog updated ${datetime(loadedAt)}` : 'The catalog has not been synced yet'}
-    actions=${html`<button class="button" onClick=${sync}>Sync catalog</button>`}>
+    actions=${html`<button class="button button-small" onClick=${sync}>Sync catalog</button>`}>
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search apps" value=${search} onInput=${e => setSearch(e.target.value)} />
     </div>
@@ -40,7 +40,7 @@ export default function Store({ query }) {
     <${Resource} resource=${{ ...catalog, data: catalog.data?.apps }}
       empty=${synced ? 'No matching apps' : html`The catalog is empty; click Sync catalog to download it`}>${apps => html`
       <div class="app-grid">${apps.map(app => html`
-        <a class="card app-card" key=${app.id} href=${href(`/store/${app.id}`)}>
+        <a class="card app-card" key=${app.id} href=${href(`/apps/${app.id}`)}>
           <div class="app-head">
             <${AppIcon} id=${app.id} />
             <div style="min-width:0">

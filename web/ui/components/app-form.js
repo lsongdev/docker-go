@@ -1,9 +1,7 @@
 import { html, useRef, useState } from '../lib/html.js';
-import { useResource } from '../lib/hooks.js';
-import { Page, Resource, Field, Notice, Badge, KV } from '../lib/ui.js';
+import { Field, Notice, Badge } from '../lib/ui.js';
 import { usePanel } from '../lib/panel.js';
 import { startJob } from '../docker.js';
-import { AppIcon } from './store.js';
 
 const inputTypes = { email: 'email', url: 'url', number: 'number', password: 'password' };
 
@@ -62,45 +60,8 @@ export function DomainField({ value, onChange, error }) {
     <input class="input" value=${value} placeholder="app.example.com" onInput=${e => onChange(e.target.value)} /><//>`;
 }
 
-export default function StoreApp({ params }) {
-  const { api, href } = usePanel();
-  const detail = useResource(signal => api.catalogApp(params.id, { signal }), [params.id]);
-  const d = detail.data;
-  const [submitting, setSubmitting] = useState(false);
-  return html`<${Page} title=${d?.app.name || params.id}
-    subtitle=${d ? `${d.app.version} · ${d.app.author}` : null}
-    actions=${d ? d.app.installed ? html`<a class="button button-primary" href=${href(`/apps/${params.id}`)}>Manage app</a>` : html`<button class="button button-primary" type="submit" form="app-install" disabled=${!d.supported || submitting}>${submitting ? 'Installing…' : 'Install'}</button>` : null}>
-    <${Resource} resource=${detail}>${({ app, readme, supported, arch, exposable }) => html`
-      <div class="grid-2">
-        <div>
-          <div class="card">
-            <div class="app-head" style="margin-bottom:14px">
-              <${AppIcon} id=${app.id} large />
-              <div><h2 style="margin:0">${app.name}</h2><div class="muted">${app.short_desc}</div></div>
-            </div>
-            <${KV} items=${[
-              ['Version', app.version],
-              ['Categories', app.categories.join(', ')],
-              ['Default port', app.port || null],
-              ['Architectures', app.supported_architectures.join(', ')],
-              ['Source', app.source ? html`<a href=${app.source} target="_blank" rel="noopener noreferrer">${app.source}</a>` : null],
-              ['Website', app.website ? html`<a href=${app.website} target="_blank" rel="noopener noreferrer">${app.website}</a>` : null],
-            ]} />
-          </div>
-          <div class="card"><h2>About</h2><div class="readme">${readme || app.description}</div></div>
-        </div>
-        ${app.installed
-          ? html`<div class="card"><${Notice} tone="info">Installed. <a href=${href(`/apps/${app.id}`)}>Manage it</a><//></div>`
-          : supported
-            ? html`<${InstallForm} app=${app} exposable=${exposable} submitting=${submitting} setSubmitting=${setSubmitting} />`
-            : html`<div class="card"><${Notice} tone="warn">This app does not support this architecture (${arch})<//></div>`}
-      </div>`}
-    <//>
-  <//>`;
-}
-
-function InstallForm({ app, exposable, submitting, setSubmitting }) {
-  const { api, navigate } = usePanel();
+export function InstallForm({ app, exposable, submitting, setSubmitting, onDone }) {
+  const { api } = usePanel();
   const [values, setValues] = useState(() => initialValues(app.form_fields));
   const [port, setPort] = useState(app.port || '');
   const [domain, setDomain] = useState('');
@@ -117,7 +78,7 @@ function InstallForm({ app, exposable, submitting, setSubmitting }) {
     setSubmitting(true);
     try {
       await startJob(api, () => api.installApp(app.id, { port: Number(port) || 0, values, ...(domain ? { domain } : {}) }), {
-        onDone: job => job.status === 'succeeded' && navigate(`/apps/${app.id}`),
+        onDone,
       });
     } catch (err) {
       setErrors(err.fields || {});
@@ -130,11 +91,13 @@ function InstallForm({ app, exposable, submitting, setSubmitting }) {
   return html`<form id="app-install" class="form card" onSubmit=${submit}>
     <h2>Install</h2>
     <${Notice} error=${error} />
+    <fieldset class="form-fields" disabled=${submitting}>
     ${app.port ? html`<${Field} label="Port" required hint="The port the app listens on on the host" error=${errors.port}>
       <input class="input" type="number" min="1" max="65535" required value=${port} onInput=${e => setPort(e.target.value)} /><//>` : null}
     ${exposable ? html`<${DomainField} value=${domain} onChange=${setDomain} error=${errors.domain} />` : null}
     <${AppForm} fields=${app.form_fields} values=${values} errors=${errors} onChange=${setValues} />
     ${generated.length ? html`<div class="field-hint">Generated for you: ${generated.map(f => html`<${Badge}>${f.label}<//> `)}</div>` : null}
+    </fieldset>
     <div class="button-actions"><button class="button button-primary" disabled=${submitting}>Install ${app.name}</button></div>
   </form>`;
 }

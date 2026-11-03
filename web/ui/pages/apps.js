@@ -10,7 +10,7 @@ export default function Apps() {
   const apps = useResource(signal => api.apps({ signal }));
   useDockerEvents(['container'], apps.reload, 800);
   return html`<${Page} title="Installed apps"
-    actions=${html`<button class="button button-primary" onClick=${() => navigate('/store')}>Browse the app store</button>`}>
+    actions=${html`<button class="button button-small button-primary" onClick=${() => navigate('/store')}>Browse the app store</button>`}>
     <${Resource} resource=${apps} empty=${html`No apps installed yet. Have a look in the <a href=${href('/store')}>app store</a>.`}>${list => html`
       <div class="app-grid">${list.map(a => html`
         <div class="card app-card" key=${a.id}>

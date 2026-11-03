@@ -20,7 +20,7 @@ export default function Networks() {
   };
   return html`<${Page} title="Networks" actions=${html`
     <${PruneButton} title="Prune networks" description="Delete every custom network no container uses." prune=${api.pruneNetworks} onDone=${networks.reload} />
-    <button class="button button-primary" onClick=${() => navigate('/networks/new')}>New network</button>`}>
+    <button class="button button-small button-primary" onClick=${() => navigate('/networks/new')}>New network</button>`}>
     <${Resource} resource=${networks} empty="No networks">${list => html`
       <${Table}>
         <thead><tr><th>Name</th><th>Driver</th><th>Subnets</th><th>Containers</th><th>Attributes</th><th class="actions">Actions</th></tr></thead>
