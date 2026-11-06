@@ -1,8 +1,9 @@
-import { html } from '../lib/html.js';
-import { useResource } from '../lib/hooks.js';
-import { Page, Resource, KV, toast, toastError, confirmDanger, Table } from '../lib/ui.js';
-import { bytes, datetime, shortId, ago } from '../lib/format.js';
-import { usePanel } from '../lib/panel.js';
+import { html } from '@lsongdev/panel/html.js';
+import { useResource } from '@lsongdev/panel/hooks.js';
+import { Page, KV, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { Resource } from '../docker.js';
+import { bytes, datetime, shortId, ago } from '@lsongdev/panel/format.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
 
 export default function Image({ params }) {
   const { api, href, navigate } = usePanel();

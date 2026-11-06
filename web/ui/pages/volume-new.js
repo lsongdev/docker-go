@@ -1,6 +1,7 @@
-import { html, useState } from '../lib/html.js';
-import { Page, Field, Notice, ListInput, toast } from '../lib/ui.js';
-import { usePanel } from '../lib/panel.js';
+import { html, useState } from '@lsongdev/panel/html.js';
+import { Page, Field, ListInput, toast } from '@lsongdev/panel/ui.js';
+import { Notice } from '../docker.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
 
 const toMap = list => Object.fromEntries(list.filter(s => s.includes('=')).map(s => [s.slice(0, s.indexOf('=')), s.slice(s.indexOf('=') + 1)]));
 

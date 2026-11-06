@@ -1,9 +1,9 @@
-import { html } from '../lib/html.js';
-import { useResource, useBusy } from '../lib/hooks.js';
-import { Page, Resource, Badge, toast, toastError, confirmDanger, Table } from '../lib/ui.js';
-import { shortId } from '../lib/format.js';
-import { usePanel } from '../lib/panel.js';
-import { useDockerEvents, PruneButton } from '../docker.js';
+import { html } from '@lsongdev/panel/html.js';
+import { useResource, useBusy } from '@lsongdev/panel/hooks.js';
+import { Page, Badge, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { shortId } from '@lsongdev/panel/format.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { useDockerEvents, PruneButton, Resource } from '../docker.js';
 
 export default function Networks() {
   const { api, href, navigate } = usePanel();

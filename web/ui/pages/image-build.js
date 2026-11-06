@@ -1,7 +1,7 @@
-import { html, useState } from '../lib/html.js';
-import { Page, Field, Notice, Tabs, ListInput } from '../lib/ui.js';
-import { usePanel } from '../lib/panel.js';
-import { startJob } from '../docker.js';
+import { html, useState } from '@lsongdev/panel/html.js';
+import { Page, Field, Tabs, ListInput } from '@lsongdev/panel/ui.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { startJob, Notice } from '../docker.js';
 
 const sample = `FROM alpine:3.20
 RUN apk add --no-cache curl

@@ -1,9 +1,9 @@
-import { html, useMemo, useState } from '../lib/html.js';
-import { useResource, useBusy } from '../lib/hooks.js';
-import { Page, Resource, Badge, Modal, Field, toast, toastError, confirmDanger, Table } from '../lib/ui.js';
-import { ago, bytes, shortId } from '../lib/format.js';
-import { usePanel } from '../lib/panel.js';
-import { useDockerEvents, PruneButton, startJob } from '../docker.js';
+import { html, useMemo, useState } from '@lsongdev/panel/html.js';
+import { useResource, useBusy } from '@lsongdev/panel/hooks.js';
+import { Page, Badge, Modal, Field, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { ago, bytes, shortId } from '@lsongdev/panel/format.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { useDockerEvents, PruneButton, startJob, Resource } from '../docker.js';
 
 function PullDialog({ onClose, onPulled }) {
   const { api } = usePanel();

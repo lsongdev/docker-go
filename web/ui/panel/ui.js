@@ -1,15 +1,15 @@
+// Copied from github.com/lsongdev/ohmyserver/panel/ui; change it there and copy it back.
 // UI building blocks for the pages: the @lsongdev/scripts components (in
 // @lsongdev/scripts), under the names and tone vocabulary the pages use.
-import { html, useContext } from './html.js';
-import { PanelContext } from './panel.js';
+import { html, useLayoutEffect } from './html.js';
 import {
   Alert, Badge as ScriptsBadge, Dialog, Loading, Empty, KeyValue, PageHeader, toast as show,
-} from '../node_modules/@lsongdev/scripts/react/components/index.js';
+} from '@lsongdev/scripts/react/components/index.js';
 
 export {
   Loading, Empty, Field, Check, ListInput, Tabs, LogView, CopyButton, ConfirmButton,
   Toaster, openDialog, DialogHost, Table,
-} from '../node_modules/@lsongdev/scripts/react/components/index.js';
+} from '@lsongdev/scripts/react/components/index.js';
 export { KeyValue as KV };
 
 // Page-level navigation (back) has its own slot, separate from metadata/actions.
@@ -24,21 +24,6 @@ export function Page({ title, subtitle, actions, back, children }) {
 const variants = { error: 'danger', warn: 'warning', success: 'success', info: 'info' };
 
 export function Notice({ error, tone = 'error', children }) {
-  const panel = useContext(PanelContext); // null outside a page
-  if (!children && error?.code === 'docker_not_installed') {
-    // The panel's package manager, when mounted, installs it in one step.
-    const install = panel?.link?.('packages', '/recommended');
-    return html`<${Alert} variant="info">
-      <strong>Docker is not installed on this server.</strong>${' '}
-      ${install ? html`<a href=${install}>Install Docker</a> from Packages, ` : html`Install
-        <a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener">Docker Engine</a> with the Compose plugin, `}
-      and these pages start working without a restart.
-    <//>`;
-  }
-  if (!children && error?.code === 'docker_unavailable') return html`<${Alert} variant="warning">
-    <strong>The Docker daemon is not running.</strong> Start it, for example with <code>systemctl start docker</code>.
-    <div class="small muted">${error.message}</div>
-  <//>`;
   return html`<${Alert} variant=${variants[tone]} error=${error}>${children}<//>`;
 }
 
@@ -77,9 +62,22 @@ export function Status({ state, label, tone, title }) {
 
 // Modal is a dialog shown for as long as it is rendered; onClose asks the
 // owner to stop rendering it.
-export function Modal({ title, onClose, children, footer, wide }) {
-  return html`<${Dialog} open title=${title} footer=${footer} onClose=${onClose}
-    closeOnBackdrop=${Boolean(onClose)} className=${wide ? 'dialog-wide' : ''}>${children}<//>`;
+export function Modal({ title, onClose, children, footer, wide, closeOnBackdrop = false }) {
+  useLayoutEffect(() => {
+    // document.activeElement is the shadow host for mounted modules.
+    let previous = document.activeElement;
+    while (previous?.shadowRoot?.activeElement) previous = previous.shadowRoot.activeElement;
+    return () => queueMicrotask(() => { if (previous?.isConnected) previous.focus(); });
+  }, []);
+  // Native close controls fire after closing. Reopen if the owner vetoes
+  // dismissal (unsaved input or a pending request). Escape can be stopped
+  // before the native dialog closes at all.
+  const close = event => {
+    if (onClose?.() === false && event.currentTarget.isConnected) event.currentTarget.showModal();
+  };
+  const cancel = event => { event.preventDefault(); onClose?.(); };
+  return html`<${Dialog} open title=${title} footer=${footer} onClose=${close} onCancel=${cancel}
+    closeOnBackdrop=${closeOnBackdrop} className=${wide ? 'dialog-wide' : ''}>${children}<//>`;
 }
 
 // toast shows a message; tone is info, success or error.

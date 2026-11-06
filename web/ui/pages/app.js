@@ -1,9 +1,9 @@
-import { html, useState } from '../lib/html.js';
-import { useResource } from '../lib/hooks.js';
-import { Page, Resource, Status, KV, Tabs, Field, Notice, Badge, ConfirmButton } from '../lib/ui.js';
-import { datetime } from '../lib/format.js';
-import { usePanel } from '../lib/panel.js';
-import { useDockerEvents, startJob } from '../docker.js';
+import { html, useState } from '@lsongdev/panel/html.js';
+import { useResource } from '@lsongdev/panel/hooks.js';
+import { Page, Status, KV, Tabs, Field, Badge, ConfirmButton } from '@lsongdev/panel/ui.js';
+import { datetime } from '@lsongdev/panel/format.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { useDockerEvents, startJob, Resource, Notice } from '../docker.js';
 import { AppIcon } from './store.js';
 import { AppForm, DomainField, initialValues, InstallForm } from '../components/app-form.js';
 

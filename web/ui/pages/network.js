@@ -1,9 +1,9 @@
-import { html } from '../lib/html.js';
-import { useResource } from '../lib/hooks.js';
-import { Page, Resource, KV, toast, toastError, confirmDanger, Table } from '../lib/ui.js';
-import { datetime, shortId } from '../lib/format.js';
-import { usePanel } from '../lib/panel.js';
-import { useDockerEvents } from '../docker.js';
+import { html } from '@lsongdev/panel/html.js';
+import { useResource } from '@lsongdev/panel/hooks.js';
+import { Page, KV, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { datetime, shortId } from '@lsongdev/panel/format.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { useDockerEvents, Resource } from '../docker.js';
 
 export default function Network({ params }) {
   const { api, href, navigate } = usePanel();

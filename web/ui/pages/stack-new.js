@@ -1,7 +1,7 @@
-import { html, useState } from '../lib/html.js';
-import { Page, Field, Notice, toast } from '../lib/ui.js';
-import { usePanel } from '../lib/panel.js';
-import { startJob } from '../docker.js';
+import { html, useState } from '@lsongdev/panel/html.js';
+import { Page, Field, toast } from '@lsongdev/panel/ui.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { startJob, Notice } from '../docker.js';
 
 const template = `services:
   web:

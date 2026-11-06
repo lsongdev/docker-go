@@ -1,6 +1,7 @@
-import { html, useState } from '../lib/html.js';
-import { Page, Field, Notice, toast } from '../lib/ui.js';
-import { usePanel } from '../lib/panel.js';
+import { html, useState } from '@lsongdev/panel/html.js';
+import { Page, Field, toast } from '@lsongdev/panel/ui.js';
+import { Notice } from '../docker.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
 
 export default function NetworkNew() {
   const { api, href, navigate } = usePanel();

@@ -1,16 +1,48 @@
 // Docker-specific UI support: the typed API, live daemon events, background
-// job dialogs and shared resource actions. Generic building blocks are in
-// lib/.
-import { html, useEffect, useRef, useState } from './lib/html.js';
-import { usePanel } from './lib/panel.js';
-import { useResource } from './lib/hooks.js';
-import { ConfirmButton, LogView, Modal, Notice, Status, openDialog, toast, toastError } from './lib/ui.js';
-import { bytes } from './lib/format.js';
+// job dialogs and shared resource actions. Generic building blocks come from
+// @lsongdev/panel.
+import { html, useEffect, useRef, useState, useContext } from '@lsongdev/panel/html.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { useResource } from '@lsongdev/panel/hooks.js';
+import { ConfirmButton, LogView, Modal, Status, openDialog, toast, toastError, Notice as PanelNotice, Loading, Empty } from '@lsongdev/panel/ui.js';
+import { Alert } from '@lsongdev/scripts/react/components/index.js';
+import { PanelContext } from '@lsongdev/panel/panel.js';
+import { bytes } from '@lsongdev/panel/format.js';
 
 const enc = encodeURIComponent;
 
 // dockerAPI wraps the module's API client (created by the shell for wherever
 // the module is mounted).
+// Notice is the panel's notice, except that it explains a missing Docker
+// install or a stopped daemon, which every page can run into.
+export function Notice({ error, tone, children }) {
+  const panel = useContext(PanelContext); // null outside a page
+  if (!children && error?.code === 'docker_not_installed') {
+    // The panel's package manager, when mounted, installs it in one step.
+    const install = panel?.link?.('packages', '/recommended');
+    return html`<${Alert} variant="info">
+      <strong>Docker is not installed on this server.</strong>${' '}
+      ${install ? html`<a href=${install}>Install Docker</a> from Packages, ` : html`Install
+        <a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener">Docker Engine</a> with the Compose plugin, `}
+      and these pages start working without a restart.
+    <//>`;
+  }
+  if (!children && error?.code === 'docker_unavailable') return html`<${Alert} variant="warning">
+    <strong>The Docker daemon is not running.</strong> Start it, for example with <code>systemctl start docker</code>.
+    <div class="small muted">${error.message}</div>
+  <//>`;
+  return html`<${PanelNotice} error=${error} tone=${tone}>${children}<//>`;
+}
+
+// Resource renders the loading, error and empty states of a useResource
+// result, with Docker's notices.
+export function Resource({ resource, empty, children }) {
+  const { data, error } = resource;
+  if (data === undefined) return error ? html`<${Notice} error=${error} />` : html`<${Loading} />`;
+  return html`${error ? html`<${Notice} error=${error} />` : null}
+    ${Array.isArray(data) && data.length === 0 && empty ? html`<${Empty}>${empty}<//>` : children(data)}`;
+}
+
 export function dockerAPI(client) {
   const { get, post, put, patch, del, request } = client;
   return {

@@ -1,9 +1,9 @@
-import { html, useEffect, useState } from '../lib/html.js';
-import { useResource } from '../lib/hooks.js';
-import { Page, Resource, Badge } from '../lib/ui.js';
-import { datetime } from '../lib/format.js';
-import { usePanel } from '../lib/panel.js';
-import { startJob } from '../docker.js';
+import { html, useEffect, useState } from '@lsongdev/panel/html.js';
+import { useResource } from '@lsongdev/panel/hooks.js';
+import { Page, Badge } from '@lsongdev/panel/ui.js';
+import { datetime } from '@lsongdev/panel/format.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { startJob, Resource } from '../docker.js';
 
 export function AppIcon({ id, large }) {
   const { api } = usePanel();

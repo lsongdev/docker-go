@@ -1,8 +1,8 @@
-import { html } from '../lib/html.js';
-import { useResource } from '../lib/hooks.js';
-import { Page, Resource, Status, Badge, Table } from '../lib/ui.js';
-import { usePanel } from '../lib/panel.js';
-import { useDockerEvents, startJob } from '../docker.js';
+import { html } from '@lsongdev/panel/html.js';
+import { useResource } from '@lsongdev/panel/hooks.js';
+import { Page, Status, Badge, Table } from '@lsongdev/panel/ui.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { useDockerEvents, startJob, Resource } from '../docker.js';
 
 export default function Stacks() {
   const { api, href, navigate } = usePanel();

@@ -1,8 +1,8 @@
-import { html, useState } from '../lib/html.js';
-import { useResource } from '../lib/hooks.js';
-import { Page, Field, ListInput, Notice } from '../lib/ui.js';
-import { usePanel } from '../lib/panel.js';
-import { startJob } from '../docker.js';
+import { html, useState } from '@lsongdev/panel/html.js';
+import { useResource } from '@lsongdev/panel/hooks.js';
+import { Page, Field, ListInput } from '@lsongdev/panel/ui.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { startJob, Notice } from '../docker.js';
 
 const initial = {
   name: '', image: '', command: '', entrypoint: '', env: [], ports: [], volumes: [], labels: [],

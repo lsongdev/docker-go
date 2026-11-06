@@ -1,9 +1,9 @@
-import { html, useEffect } from '../lib/html.js';
-import { useResource } from '../lib/hooks.js';
-import { Page, Resource, Status, Table } from '../lib/ui.js';
-import { ago, datetime } from '../lib/format.js';
-import { usePanel } from '../lib/panel.js';
-import { openJob, onJobsChanged } from '../docker.js';
+import { html, useEffect } from '@lsongdev/panel/html.js';
+import { useResource } from '@lsongdev/panel/hooks.js';
+import { Page, Status, Table } from '@lsongdev/panel/ui.js';
+import { ago, datetime } from '@lsongdev/panel/format.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { openJob, onJobsChanged, Resource } from '../docker.js';
 
 function duration(job) {
   const end = job.finished_at ? new Date(job.finished_at) : new Date();

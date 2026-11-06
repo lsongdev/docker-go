@@ -1,9 +1,9 @@
-import { html, useEffect, useRef, useState } from '../lib/html.js';
-import { useResource } from '../lib/hooks.js';
-import { Page, Resource, Status, KV, Tabs, LogView, Notice, Badge, Table } from '../lib/ui.js';
-import { ago, bytes, datetime, percent, shortId } from '../lib/format.js';
-import { usePanel } from '../lib/panel.js';
-import { useDockerEvents } from '../docker.js';
+import { html, useEffect, useRef, useState } from '@lsongdev/panel/html.js';
+import { useResource } from '@lsongdev/panel/hooks.js';
+import { Page, Status, KV, Tabs, LogView, Badge, Table } from '@lsongdev/panel/ui.js';
+import { ago, bytes, datetime, percent, shortId } from '@lsongdev/panel/format.js';
+import { usePanel } from '@lsongdev/panel/panel.js';
+import { useDockerEvents, Resource, Notice } from '../docker.js';
 import { ContainerActions } from './containers.js';
 
 export default function Container({ params, query }) {
