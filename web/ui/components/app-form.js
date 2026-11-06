@@ -1,6 +1,6 @@
-import { html, useRef, useState } from '@lsongdev/panel/html.js';
+import { html, useRef, useState } from '../lib/html.js';
 import { Field, Alert, Badge } from '@lsongdev/scripts/react/components/index.js';
-import { usePanel } from '@lsongdev/panel/panel.js';
+import { usePanel } from '../lib/panel.js';
 import { startJob } from '../docker.js';
 
 const inputTypes = { email: 'email', url: 'url', number: 'number', password: 'password' };

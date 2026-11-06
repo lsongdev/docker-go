@@ -1,8 +1,8 @@
-import { html, useEffect, useState } from '@lsongdev/panel/html.js';
-import { useResource } from '@lsongdev/panel/hooks.js';
+import { html, useEffect, useState } from '../lib/html.js';
+import { useResource } from '../lib/hooks.js';
 import { PageHeader, Tabs, Field, Badge, ConfirmButton, toast, Table } from '@lsongdev/scripts/react/components/index.js';
-import { Status } from '@lsongdev/panel/ui.js';
-import { usePanel } from '@lsongdev/panel/panel.js';
+import { Status } from '../lib/ui.js';
+import { usePanel } from '../lib/panel.js';
 import { useDockerEvents, startJob, Resource, Notice } from '../docker.js';
 
 export default function Stack({ params, query }) {

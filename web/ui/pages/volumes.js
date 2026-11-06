@@ -1,9 +1,9 @@
-import { html, useMemo } from '@lsongdev/panel/html.js';
-import { useResource, useBusy } from '@lsongdev/panel/hooks.js';
+import { html, useMemo } from '../lib/html.js';
+import { useResource, useBusy } from '../lib/hooks.js';
 import { PageHeader, Badge, toast, Table } from '@lsongdev/scripts/react/components/index.js';
-import { toastError } from '@lsongdev/panel/ui.js';
-import { ago } from '@lsongdev/panel/format.js';
-import { usePanel } from '@lsongdev/panel/panel.js';
+import { toastError } from '../lib/ui.js';
+import { ago } from '../lib/format.js';
+import { usePanel } from '../lib/panel.js';
 import { useDockerEvents, PruneButton, Resource } from '../docker.js';
 
 export default function Volumes({ query }) {

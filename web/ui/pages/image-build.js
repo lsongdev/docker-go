@@ -1,6 +1,6 @@
-import { html, useState } from '@lsongdev/panel/html.js';
+import { html, useState } from '../lib/html.js';
 import { PageHeader, Field, Tabs, ListInput } from '@lsongdev/scripts/react/components/index.js';
-import { usePanel } from '@lsongdev/panel/panel.js';
+import { usePanel } from '../lib/panel.js';
 import { startJob, Notice } from '../docker.js';
 
 const sample = `FROM alpine:3.20

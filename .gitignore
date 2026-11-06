@@ -1,3 +1,6 @@
 /data/
 /docker-go
 /data.log
+
+# browser dependencies, installed by make deps
+node_modules/

@@ -1,14 +1,14 @@
 // Docker-specific UI support: the typed API, live daemon events, background
 // job dialogs and shared resource actions. Generic building blocks come from
-// @lsongdev/panel.
-import { html, useEffect, useRef, useState, useContext } from '@lsongdev/panel/html.js';
-import { usePanel } from '@lsongdev/panel/panel.js';
-import { useResource } from '@lsongdev/panel/hooks.js';
+// lib/.
+import { html, useEffect, useRef, useState, useContext } from './lib/html.js';
+import { usePanel } from './lib/panel.js';
+import { useResource } from './lib/hooks.js';
 import { ConfirmButton, LogView, openDialog, toast, Loading, Empty } from '@lsongdev/scripts/react/components/index.js';
-import { Modal, Status, toastError } from '@lsongdev/panel/ui.js';
+import { Modal, Status, toastError } from './lib/ui.js';
 import { Alert } from '@lsongdev/scripts/react/components/index.js';
-import { PanelContext } from '@lsongdev/panel/panel.js';
-import { bytes } from '@lsongdev/panel/format.js';
+import { PanelContext } from './lib/panel.js';
+import { bytes } from './lib/format.js';
 
 const enc = encodeURIComponent;
 

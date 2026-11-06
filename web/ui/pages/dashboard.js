@@ -1,9 +1,9 @@
-import { html } from '@lsongdev/panel/html.js';
-import { useResource } from '@lsongdev/panel/hooks.js';
+import { html } from '../lib/html.js';
+import { useResource } from '../lib/hooks.js';
 import { PageHeader, KeyValue, Table } from '@lsongdev/scripts/react/components/index.js';
-import { Status } from '@lsongdev/panel/ui.js';
-import { bytes, datetime } from '@lsongdev/panel/format.js';
-import { usePanel } from '@lsongdev/panel/panel.js';
+import { Status } from '../lib/ui.js';
+import { bytes, datetime } from '../lib/format.js';
+import { usePanel } from '../lib/panel.js';
 import { useDockerEvents, Resource } from '../docker.js';
 
 function Stat({ label, value, sub, to }) {

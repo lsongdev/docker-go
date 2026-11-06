@@ -1,7 +1,7 @@
-import { html, useState } from '@lsongdev/panel/html.js';
-import { useResource } from '@lsongdev/panel/hooks.js';
+import { html, useState } from '../lib/html.js';
+import { useResource } from '../lib/hooks.js';
 import { PageHeader, Field, ListInput } from '@lsongdev/scripts/react/components/index.js';
-import { usePanel } from '@lsongdev/panel/panel.js';
+import { usePanel } from '../lib/panel.js';
 import { startJob, Notice } from '../docker.js';
 
 const initial = {

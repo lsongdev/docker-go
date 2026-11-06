@@ -1,9 +1,9 @@
-import { html, useMemo } from '@lsongdev/panel/html.js';
-import { useResource, useBusy } from '@lsongdev/panel/hooks.js';
+import { html, useMemo } from '../lib/html.js';
+import { useResource, useBusy } from '../lib/hooks.js';
 import { PageHeader, toast, Table } from '@lsongdev/scripts/react/components/index.js';
-import { Status, toastError } from '@lsongdev/panel/ui.js';
-import { ago, shortId } from '@lsongdev/panel/format.js';
-import { usePanel } from '@lsongdev/panel/panel.js';
+import { Status, toastError } from '../lib/ui.js';
+import { ago, shortId } from '../lib/format.js';
+import { usePanel } from '../lib/panel.js';
 import { useDockerEvents, PruneButton, Resource } from '../docker.js';
 
 export function portLabel(p) {
