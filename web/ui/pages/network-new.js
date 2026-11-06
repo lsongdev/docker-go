@@ -1,5 +1,5 @@
 import { html, useState } from '@lsongdev/panel/html.js';
-import { Page, Field, toast } from '@lsongdev/panel/ui.js';
+import { PageHeader, Field, toast } from '@lsongdev/scripts/react/components/index.js';
 import { Notice } from '../docker.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 
@@ -16,7 +16,7 @@ export default function NetworkNew() {
       navigate(`/networks/${n.id}`);
     } catch (err) { setError(err); }
   };
-  return html`<${Page} title="New network" back=${{ href: href('/networks'), label: 'Networks' }}>
+  return html`<${PageHeader} title="New network" back=${{ href: href('/networks'), label: 'Networks' }} />
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
       <div class="docker-create-fields">
@@ -37,6 +37,5 @@ export default function NetworkNew() {
         <label class="field-check"><input type="checkbox" checked=${form.ipv6} onChange=${set('ipv6')} />Enable IPv6</label>
       </div>
       <div class="button-actions"><button class="button button-primary">Create</button><a class="button" href=${href('/networks')}>Cancel</a></div>
-    </form>
-  <//>`;
+    </form>`;
 }

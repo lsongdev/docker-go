@@ -1,6 +1,7 @@
 import { html, useEffect, useState } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, Status, Tabs, Field, Badge, ConfirmButton, toast, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, Tabs, Field, Badge, ConfirmButton, toast, Table } from '@lsongdev/scripts/react/components/index.js';
+import { Status } from '@lsongdev/panel/ui.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, startJob, Resource, Notice } from '../docker.js';
 
@@ -14,7 +15,7 @@ export default function Stack({ params, query }) {
   const remove = volumes => startJob(api, () => api.deleteStack(params.name, volumes), {
     onDone: job => job.status === 'succeeded' && navigate('/stacks'),
   }).catch(() => {}); // startJob already reported the error
-  return html`<${Page} title=${params.name}
+  return html`<${PageHeader} title=${params.name}
     subtitle=${s ? html`<${Status} state=${s.status} /> <span class="mono">${s.dir}</span>` : null}
     actions=${s ? html`
       <button class="button button-small button-primary" onClick=${() => act('up')}>Deploy</button>
@@ -24,13 +25,12 @@ export default function Stack({ params, query }) {
         <button class="button button-small" onClick=${() => act('down')}>Down</button>` : null}
       <button class="button button-small" onClick=${() => act('pull')}>Pull images</button>
       ${s.managed ? html`<${ConfirmButton} className="button button-small" label="Delete" title=${`Delete ${params.name}`} confirmLabel="Delete"
-        description="Stop the stack, delete its containers and networks, and remove the project directory." checkbox="Also delete its volumes (their data is lost for good)" onConfirm=${remove} />` : null}` : null}>
+        description="Stop the stack, delete its containers and networks, and remove the project directory." checkbox="Also delete its volumes (their data is lost for good)" onConfirm=${remove} />` : null}` : null} />
     <${Resource} resource=${stack}>${s => html`
-      ${s.managed ? null : html`<${Notice} tone="info">This project was created outside this module, so its files are read-only; it can still be deployed, stopped and so on.<//>`}
+      ${s.managed ? null : html`<${Notice} variant="info">This project was created outside this module, so its files are read-only; it can still be deployed, stopped and so on.<//>`}
       <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t })} tabs=${[['services', `Services (${s.services.length})`], ['config', 'Configuration']]} />
       ${tab === 'services' ? html`<${Services} services=${s.services} />` : html`<${Editor} stack=${s} onSaved=${stack.reload} />`}`}
-    <//>
-  <//>`;
+    <//>`;
 }
 
 function Services({ services }) {

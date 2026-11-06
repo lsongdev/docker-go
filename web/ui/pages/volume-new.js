@@ -1,5 +1,5 @@
 import { html, useState } from '@lsongdev/panel/html.js';
-import { Page, Field, ListInput, toast } from '@lsongdev/panel/ui.js';
+import { PageHeader, Field, ListInput, toast } from '@lsongdev/scripts/react/components/index.js';
 import { Notice } from '../docker.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 
@@ -20,7 +20,7 @@ export default function VolumeNew() {
       navigate('/volumes');
     } catch (err) { setError(err); }
   };
-  return html`<${Page} title="New volume" back=${{ href: href('/volumes'), label: 'Volumes' }}>
+  return html`<${PageHeader} title="New volume" back=${{ href: href('/volumes'), label: 'Volumes' }} />
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
       <div class="docker-create-fields">
@@ -33,6 +33,5 @@ export default function VolumeNew() {
         <${Field} label="Labels" hint="KEY=VALUE"><${ListInput} values=${labels} onChange=${setLabels} /><//>
       </div>
       <div class="button-actions"><button class="button button-primary">Create</button><a class="button" href=${href('/volumes')}>Cancel</a></div>
-    </form>
-  <//>`;
+    </form>`;
 }

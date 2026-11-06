@@ -1,5 +1,5 @@
 import { html, useRef, useState } from '@lsongdev/panel/html.js';
-import { Field, Notice, Badge } from '@lsongdev/panel/ui.js';
+import { Field, Alert, Badge } from '@lsongdev/scripts/react/components/index.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { startJob } from '../docker.js';
 
@@ -90,7 +90,7 @@ export function InstallForm({ app, exposable, submitting, setSubmitting, onDone 
   };
   return html`<form id="app-install" class="form card" onSubmit=${submit}>
     <h2>Install</h2>
-    <${Notice} error=${error} />
+    <${Alert} error=${error} />
     <fieldset class="form-fields" disabled=${submitting}>
     ${app.port ? html`<${Field} label="Port" required hint="The port the app listens on on the host" error=${errors.port}>
       <input class="input" type="number" min="1" max="65535" required value=${port} onInput=${e => setPort(e.target.value)} /><//>` : null}

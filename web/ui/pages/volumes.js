@@ -1,6 +1,7 @@
 import { html, useMemo } from '@lsongdev/panel/html.js';
 import { useResource, useBusy } from '@lsongdev/panel/hooks.js';
-import { Page, Badge, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, Badge, toast, Table } from '@lsongdev/scripts/react/components/index.js';
+import { toastError } from '@lsongdev/panel/ui.js';
 import { ago } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, PruneButton, Resource } from '../docker.js';
@@ -14,17 +15,17 @@ export default function Volumes({ query }) {
   const filtered = useMemo(() => (volumes.data || []).filter(v =>
     !search || `${v.name} ${v.project || ''}`.toLowerCase().includes(search.toLowerCase())), [volumes.data, search]);
   const remove = v => {
-    if (!confirmDanger(`Delete the volume ${v.name}? Its data is lost for good.`)) return;
+    if (!window.confirm(`Delete the volume ${v.name}? Its data is lost for good.`)) return;
     run(v.name, async () => {
       await api.removeVolume(v.name);
       toast(`Deleted ${v.name}`, 'success');
       volumes.reload();
     });
   };
-  return html`<${Page} title="Volumes" actions=${html`
+  return html`<${PageHeader} title="Volumes" actions=${html`
     <${PruneButton} title="Prune volumes" description="Delete every anonymous volume no container uses. Their data is lost for good."
       allLabel="Also delete unused named volumes" prune=${api.pruneVolumes} onDone=${volumes.reload} />
-    <button class="button button-small button-primary" onClick=${() => navigate('/volumes/new')}>New volume</button>`}>
+    <button class="button button-small button-primary" onClick=${() => navigate('/volumes/new')}>New volume</button>`} />
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search names or projects" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
     </div>
@@ -35,12 +36,11 @@ export default function Volumes({ query }) {
           <td><span class="cell-main mono">${v.name.length > 40 ? v.name.slice(0, 12) + '…' : v.name}</span>
             ${v.project ? html`<div class="cell-sub"><a href=${href(`/stacks/${v.project}`)}>${v.project}</a></div>` : null}</td>
           <td>${v.driver}</td>
-          <td>${v.containers.length ? html`<${Badge} tone="blue" title=${v.containers.join('\n')}>${v.containers.join(', ')}<//>` : html`<span class="muted">Unused</span>`}</td>
+          <td>${v.containers.length ? html`<${Badge} variant="info" title=${v.containers.join('\n')}>${v.containers.join(', ')}<//>` : html`<span class="muted">Unused</span>`}</td>
           <td class="truncate mono" style="max-width:280px" title=${v.mountpoint}>${v.mountpoint}</td>
           <td class="nowrap">${ago(v.created_at)}</td>
           <td class="actions"><button class="button button-small button-danger" disabled=${busy[v.name]} onClick=${() => remove(v)}>Delete</button></td>
         </tr>`)}</tbody>
       <//>`}
-    <//>
-  <//>`;
+    <//>`;
 }

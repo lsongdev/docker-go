@@ -1,5 +1,5 @@
 import { html, useState } from '@lsongdev/panel/html.js';
-import { Page, Field, Tabs, ListInput } from '@lsongdev/panel/ui.js';
+import { PageHeader, Field, Tabs, ListInput } from '@lsongdev/scripts/react/components/index.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { startJob, Notice } from '../docker.js';
 
@@ -27,7 +27,7 @@ export default function ImageBuild() {
     } catch (err) { setError(err); }
   };
   const switchSource = source => setForm(f => ({ ...f, source, dockerfile: source === 'dockerfile' ? sample : '' }));
-  return html`<${Page} title="Build image" back=${{ href: href('/images'), label: 'Images' }}>
+  return html`<${PageHeader} title="Build image" back=${{ href: href('/images'), label: 'Images' }} />
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
       <${Field} label="Tag" required hint="Such as myapp:1.0">
@@ -55,6 +55,5 @@ export default function ImageBuild() {
         <button class="button button-primary">Build</button>
         <a class="button" href=${href('/images')}>Cancel</a>
       </div>
-    </form>
-  <//>`;
+    </form>`;
 }

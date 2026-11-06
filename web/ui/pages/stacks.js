@@ -1,6 +1,7 @@
 import { html } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, Status, Badge, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, Badge, Table } from '@lsongdev/scripts/react/components/index.js';
+import { Status } from '@lsongdev/panel/ui.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, startJob, Resource } from '../docker.js';
 
@@ -9,8 +10,8 @@ export default function Stacks() {
   const stacks = useResource(signal => api.stacks({ signal }));
   useDockerEvents(['container'], stacks.reload, 800);
   const act = (name, action) => startJob(api, () => api.stackAction(name, action), { onDone: stacks.reload }).catch(() => {});
-  return html`<${Page} title="Compose" subtitle="Multi-container applications run with docker compose"
-    actions=${html`<button class="button button-small button-primary" onClick=${() => navigate('/stacks/new')}>New stack</button>`}>
+  return html`<${PageHeader} title="Compose" subtitle="Multi-container applications run with docker compose"
+    actions=${html`<button class="button button-small button-primary" onClick=${() => navigate('/stacks/new')}>New stack</button>`} />
     <${Resource} resource=${stacks} empty="No compose projects yet">${list => html`
       <${Table}>
         <thead><tr><th>Name</th><th>Status</th><th>Containers</th><th>Compose file</th><th class="actions">Actions</th></tr></thead>
@@ -28,6 +29,5 @@ export default function Stacks() {
           </span></td>
         </tr>`)}</tbody>
       <//>`}
-    <//>
-  <//>`;
+    <//>`;
 }

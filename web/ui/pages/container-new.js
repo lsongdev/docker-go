@@ -1,6 +1,6 @@
 import { html, useState } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, Field, ListInput } from '@lsongdev/panel/ui.js';
+import { PageHeader, Field, ListInput } from '@lsongdev/scripts/react/components/index.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { startJob, Notice } from '../docker.js';
 
@@ -32,7 +32,7 @@ export default function ContainerNew({ query }) {
       setSubmitting(false);
     }
   };
-  return html`<${Page} title="New container" back=${{ href: href('/containers'), label: 'Containers' }}>
+  return html`<${PageHeader} title="New container" back=${{ href: href('/containers'), label: 'Containers' }} />
     <form class="form card" onSubmit=${submit}>
       <${Notice} error=${error} />
       <div class="docker-create-fields">
@@ -88,6 +88,5 @@ export default function ContainerNew({ query }) {
         <span class="spacer"></span>
         <a class="button" href=${href('/containers')}>Cancel</a>
       </div>
-    </form>
-  <//>`;
+    </form>`;
 }

@@ -4,7 +4,8 @@
 import { html, useEffect, useRef, useState, useContext } from '@lsongdev/panel/html.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { ConfirmButton, LogView, Modal, Status, openDialog, toast, toastError, Notice as PanelNotice, Loading, Empty } from '@lsongdev/panel/ui.js';
+import { ConfirmButton, LogView, openDialog, toast, Loading, Empty } from '@lsongdev/scripts/react/components/index.js';
+import { Modal, Status, toastError } from '@lsongdev/panel/ui.js';
 import { Alert } from '@lsongdev/scripts/react/components/index.js';
 import { PanelContext } from '@lsongdev/panel/panel.js';
 import { bytes } from '@lsongdev/panel/format.js';
@@ -15,7 +16,7 @@ const enc = encodeURIComponent;
 // the module is mounted).
 // Notice is the panel's notice, except that it explains a missing Docker
 // install or a stopped daemon, which every page can run into.
-export function Notice({ error, tone, children }) {
+export function Notice({ error, variant, children }) {
   const panel = useContext(PanelContext); // null outside a page
   if (!children && error?.code === 'docker_not_installed') {
     // The panel's package manager, when mounted, installs it in one step.
@@ -31,7 +32,7 @@ export function Notice({ error, tone, children }) {
     <strong>The Docker daemon is not running.</strong> Start it, for example with <code>systemctl start docker</code>.
     <div class="small muted">${error.message}</div>
   <//>`;
-  return html`<${PanelNotice} error=${error} tone=${tone}>${children}<//>`;
+  return html`<${Alert} variant=${variant ?? (children ? 'danger' : undefined)} error=${error}>${children}<//>`;
 }
 
 // Resource renders the loading, error and empty states of a useResource

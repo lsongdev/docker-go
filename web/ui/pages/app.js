@@ -1,6 +1,7 @@
 import { html, useState } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, Status, KV, Tabs, Field, Badge, ConfirmButton } from '@lsongdev/panel/ui.js';
+import { PageHeader, KeyValue, Tabs, Field, Badge, ConfirmButton } from '@lsongdev/scripts/react/components/index.js';
+import { Status } from '@lsongdev/panel/ui.js';
 import { datetime } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, startJob, Resource, Notice } from '../docker.js';
@@ -32,7 +33,7 @@ function AppDetail({ id, query }) {
     },
   }).catch(() => {});
   const running = a && (a.status === 'running' || a.status === 'partial');
-  return html`<${Page} title=${metadata?.name || a?.app?.name || id}
+  return html`<${PageHeader} title=${metadata?.name || a?.app?.name || id}
     actions=${!d ? null : !a ? html`<button class="button button-small button-primary" type="button" onClick=${() => setQuery({ tab: 'settings' })} disabled=${!d.supported || submitting}>${submitting ? 'Installing…' : 'Install'}</button>` : html`
       ${a.url && a.status === 'running' ? html`<a class="button button-small button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
       ${running
@@ -40,9 +41,9 @@ function AppDetail({ id, query }) {
         : html`<button class="button button-small" disabled=${submitting} onClick=${() => act('start')}>Start</button>`}
       ${a.update_available ? html`<button class="button button-small" onClick=${update}>Update to ${a.latest_version}</button>` : null}
       <${ConfirmButton} className="button button-small" label="Uninstall" title=${`Uninstall ${metadata?.name || id}`} confirmLabel="Uninstall"
-        description="Stop the app and delete its containers and networks." checkbox="Keep the data directory and volumes for a later reinstall" onConfirm=${uninstall} />`}>
+        description="Stop the app and delete its containers and networks." checkbox="Keep the data directory and volumes for a later reinstall" onConfirm=${uninstall} />`} />
     <${Resource} resource=${detail}>${d => html`
-      ${d.installed && !d.catalog ? html`<${Notice} tone="warn">This app was removed from the catalog. It can still be started, stopped and uninstalled, but not updated or reconfigured.<//>` : null}
+      ${d.installed && !d.catalog ? html`<${Notice} variant="warning">This app was removed from the catalog. It can still be started, stopped and uninstalled, but not updated or reconfigured.<//>` : null}
       <${AppSummary} id=${id} metadata=${d.catalog} a=${d.app} />
       <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t === 'readme' ? '' : t })}
         tabs=${[['readme', 'README'], ['settings', d.installed ? 'Settings' : 'Install'], ...(secrets.length ? [['credentials', 'Credentials']] : [])]} />
@@ -52,13 +53,12 @@ function AppDetail({ id, query }) {
       <div hidden=${tab !== 'settings'}>
         ${d.installed ? html`<${Settings} key=${id} a=${d.app} exposable=${d.exposable} onSaved=${detail.reload} />`
           : d.supported ? html`<${InstallForm} key=${id} app=${d.catalog} exposable=${d.exposable} submitting=${submitting} setSubmitting=${setSubmitting} onDone=${detail.reload} />`
-          : html`<div class="card"><${Notice} tone="warn">This app does not support this architecture (${d.arch})<//></div>`}
+          : html`<div class="card"><${Notice} variant="warning">This app does not support this architecture (${d.arch})<//></div>`}
       </div>
       ${secrets.length ? html`<div hidden=${tab !== 'credentials'}><div class="card"><h2>Credentials</h2>
-        <${KV} items=${secrets.map(f => [f.label, html`<${Secret} value=${d.app.values[f.env_variable]} />`])} />
+        <${KeyValue} items=${secrets.map(f => [f.label, html`<${Secret} value=${d.app.values[f.env_variable]} />`])} />
       </div></div>` : null}
-    `}<//>
-  <//>`;
+    `}<//>`;
 }
 
 function AppSummary({ id, metadata, a }) {
@@ -71,11 +71,11 @@ function AppSummary({ id, metadata, a }) {
         <div class="muted">${metadata?.short_desc}</div>
       </div>
     </div>
-    <${KV} items=${[
+    <${KeyValue} items=${[
       ...(a ? [
         ['URL', a.url ? html`<a href=${a.url} target="_blank" rel="noopener">${a.url}</a>` : null],
         ['Domain', a.domain || null], ['Port', a.port || null],
-        ['Version', html`${a.version} ${a.update_available ? html`<${Badge} tone="blue">Latest ${a.latest_version}<//>` : null}`],
+        ['Version', html`${a.version} ${a.update_available ? html`<${Badge} variant="info">Latest ${a.latest_version}<//>` : null}`],
         ['Compose', html`<a href=${href(`/stacks/${a.id}`)}>${a.id}</a>`],
         ['Containers', html`<${Containers} a=${a} />`],
       ] : [['Version', metadata?.version], ['Default port', metadata?.port || null]]),
@@ -118,7 +118,7 @@ function Settings({ a, exposable, onSaved }) {
   const [domain, setDomain] = useState(a.domain || '');
   const [errors, setErrors] = useState({});
   const [error, setError] = useState(null);
-  if (!a.app) return html`<${Notice} tone="info">The app was removed from the catalog, so its settings cannot change.<//>`;
+  if (!a.app) return html`<${Notice} variant="info">The app was removed from the catalog, so its settings cannot change.<//>`;
   const submit = async e => {
     e.preventDefault();
     setErrors({});
@@ -131,7 +131,7 @@ function Settings({ a, exposable, onSaved }) {
     }
   };
   return html`<form class="form card" onSubmit=${submit}>
-    <${Notice} tone="info">Saving redeploys the app from the current catalog template; generated secrets stay the same.<//>
+    <${Notice} variant="info">Saving redeploys the app from the current catalog template; generated secrets stay the same.<//>
     <${Notice} error=${error} />
     ${a.port ? html`<${Field} label="Port" required error=${errors.port}>
       <input class="input" type="number" min="1" max="65535" required value=${port} onInput=${e => setPort(e.target.value)} /><//>` : null}

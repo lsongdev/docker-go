@@ -1,6 +1,7 @@
 import { html } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, KV, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, KeyValue, toast, Table } from '@lsongdev/scripts/react/components/index.js';
+import { toastError } from '@lsongdev/panel/ui.js';
 import { Resource } from '../docker.js';
 import { bytes, datetime, shortId, ago } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
@@ -10,7 +11,7 @@ export default function Image({ params }) {
   const image = useResource(signal => api.image(params.id, { signal }), [params.id]);
   const remove = async () => {
     const img = image.data;
-    if (!confirmDanger(`Delete the image ${img.tags[0] || shortId(img.id)}?`)) return;
+    if (!window.confirm(`Delete the image ${img.tags[0] || shortId(img.id)}?`)) return;
     try {
       await api.removeImage(img.id, img.containers.length > 0);
       toast('Image deleted', 'success');
@@ -18,14 +19,14 @@ export default function Image({ params }) {
     } catch (err) { toastError(err); }
   };
   const img = image.data;
-  return html`<${Page} title=${img?.tags[0] || shortId(params.id)} subtitle=${img ? html`<code>${img.id}</code>` : null}
+  return html`<${PageHeader} title=${img?.tags[0] || shortId(params.id)} subtitle=${img ? html`<code>${img.id}</code>` : null}
     actions=${img ? html`
       <a class="button button-small button-primary" href=${href('/containers/new', { image: img.tags[0] || img.id })}>Run container</a>
-      <button class="button button-small button-danger" onClick=${remove}>Delete</button>` : null}>
+      <button class="button button-small button-danger" onClick=${remove}>Delete</button>` : null} />
     <${Resource} resource=${image}>${img => html`
       <div class="grid-2">
         <div class="card"><h2>Details</h2>
-          <${KV} items=${[
+          <${KeyValue} items=${[
             ['Tags', img.tags.join(', ')],
             ['Digest', img.digests.length ? html`<code>${img.digests[0]}</code>` : null],
             ['Size', bytes(img.size)],
@@ -37,7 +38,7 @@ export default function Image({ params }) {
           ]} />
         </div>
         <div class="card"><h2>Defaults</h2>
-          <${KV} items=${[
+          <${KeyValue} items=${[
             ['Entrypoint', img.entrypoint?.length ? html`<code>${img.entrypoint.join(' ')}</code>` : null],
             ['Command', img.cmd?.length ? html`<code>${img.cmd.join(' ')}</code>` : null],
             ['Working directory', img.working_dir],
@@ -58,6 +59,5 @@ export default function Image({ params }) {
           </tr>`)}</tbody>
         <//>
       </div>`}
-    <//>
-  <//>`;
+    <//>`;
 }

@@ -1,6 +1,7 @@
 import { html } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, KV, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, KeyValue, toast, Table } from '@lsongdev/scripts/react/components/index.js';
+import { toastError } from '@lsongdev/panel/ui.js';
 import { datetime, shortId } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, Resource } from '../docker.js';
@@ -11,19 +12,19 @@ export default function Network({ params }) {
   useDockerEvents(['network'], network.reload);
   const n = network.data;
   const remove = async () => {
-    if (!confirmDanger(`Delete the network ${n.name}?`)) return;
+    if (!window.confirm(`Delete the network ${n.name}?`)) return;
     try {
       await api.removeNetwork(n.id);
       toast('Network deleted', 'success');
       navigate('/networks');
     } catch (err) { toastError(err); }
   };
-  return html`<${Page} title=${n?.name || shortId(params.id)} subtitle=${n ? html`<code>${n.id}</code>` : null}
-    actions=${html`${n && !n.builtin ? html`<button class="button button-small button-danger" onClick=${remove}>Delete</button>` : null}`}>
+  return html`<${PageHeader} title=${n?.name || shortId(params.id)} subtitle=${n ? html`<code>${n.id}</code>` : null}
+    actions=${html`${n && !n.builtin ? html`<button class="button button-small button-danger" onClick=${remove}>Delete</button>` : null}`} />
     <${Resource} resource=${network}>${n => html`
       <div class="grid-2">
         <div class="card"><h2>Configuration</h2>
-          <${KV} items=${[
+          <${KeyValue} items=${[
             ['Driver', n.driver],
             ['Scope', n.scope],
             ['Subnets', n.subnets.map(s => html`<div><code>${s.subnet}</code>${s.gateway ? html` gateway <code>${s.gateway}</code>` : null}${s.ip_range ? html` range <code>${s.ip_range}</code>` : null}</div>`)],
@@ -41,6 +42,5 @@ export default function Network({ params }) {
           </tr>`)}</tbody><//>` : html`<span class="muted">No containers are connected</span>`}
         </div>
       </div>`}
-    <//>
-  <//>`;
+    <//>`;
 }

@@ -1,6 +1,7 @@
 import { html } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, Status, KV, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, KeyValue, Table } from '@lsongdev/scripts/react/components/index.js';
+import { Status } from '@lsongdev/panel/ui.js';
 import { bytes, datetime } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, Resource } from '../docker.js';
@@ -19,7 +20,7 @@ export default function Dashboard() {
   const system = useResource(signal => api.system({ signal }));
   const installed = useResource(signal => api.apps({ signal }));
   useDockerEvents(['container', 'image'], () => { system.reload(); installed.reload(); });
-  return html`<${Page} title="Overview">
+  return html`<${PageHeader} title="Overview" />
     <${Resource} resource=${system}>${s => html`
       <div class="grid">
         <${Stat} label="Containers" value=${s.containers} sub=${`${s.running} running · ${s.stopped} stopped${s.paused ? ` · ${s.paused} paused` : ''}`} to="/containers" />
@@ -30,7 +31,7 @@ export default function Dashboard() {
       </div>
       <div class="grid-2 section">
         <div class="card"><h2>Docker</h2>
-          <${KV} items=${[
+          <${KeyValue} items=${[
             ['Version', `${s.version} (API ${s.api_version})`],
             ['Compose', s.compose_version],
             ['Host', s.name],
@@ -55,6 +56,5 @@ export default function Dashboard() {
           <//>
         </div>
       </div>`}
-    <//>
-  <//>`;
+    <//>`;
 }

@@ -1,6 +1,7 @@
 import { html } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, Status, Badge } from '@lsongdev/panel/ui.js';
+import { PageHeader, Badge } from '@lsongdev/scripts/react/components/index.js';
+import { Status } from '@lsongdev/panel/ui.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, Resource } from '../docker.js';
 import { AppIcon } from './store.js';
@@ -9,8 +10,8 @@ export default function Apps() {
   const { api, href, navigate } = usePanel();
   const apps = useResource(signal => api.apps({ signal }));
   useDockerEvents(['container'], apps.reload, 800);
-  return html`<${Page} title="Installed apps"
-    actions=${html`<button class="button button-small button-primary" onClick=${() => navigate('/store')}>Browse the app store</button>`}>
+  return html`<${PageHeader} title="Installed apps"
+    actions=${html`<button class="button button-small button-primary" onClick=${() => navigate('/store')}>Browse the app store</button>`} />
     <${Resource} resource=${apps} empty=${html`No apps installed yet. Have a look in the <a href=${href('/store')}>app store</a>.`}>${list => html`
       <div class="app-grid">${list.map(a => html`
         <div class="card app-card" key=${a.id}>
@@ -23,8 +24,8 @@ export default function Apps() {
           </a>
           <div class="tags">
             <${Status} state=${a.status} />
-            ${a.update_available ? html`<${Badge} tone="blue">Update available<//>` : null}
-            ${a.app ? null : html`<${Badge} tone="amber">Removed from the catalog<//>`}
+            ${a.update_available ? html`<${Badge} variant="info">Update available<//>` : null}
+            ${a.app ? null : html`<${Badge} variant="warning">Removed from the catalog<//>`}
           </div>
           <div class="button-actions">
             ${a.url && a.status === 'running' ? html`<a class="button button-small button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
@@ -32,6 +33,5 @@ export default function Apps() {
           </div>
         </div>`)}
       </div>`}
-    <//>
-  <//>`;
+    <//>`;
 }

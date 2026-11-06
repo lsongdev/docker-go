@@ -1,6 +1,7 @@
 import { html, useMemo, useState } from '@lsongdev/panel/html.js';
 import { useResource, useBusy } from '@lsongdev/panel/hooks.js';
-import { Page, Badge, Modal, Field, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, Badge, Field, toast, Table } from '@lsongdev/scripts/react/components/index.js';
+import { Modal, toastError } from '@lsongdev/panel/ui.js';
 import { ago, bytes, shortId } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, PruneButton, startJob, Resource } from '../docker.js';
@@ -38,7 +39,7 @@ export default function Images({ query }) {
     !search || `${i.tags.join(' ')} ${i.id}`.toLowerCase().includes(search.toLowerCase())), [images.data, search]);
   const remove = img => {
     const label = img.tags[0] || shortId(img.id);
-    if (!confirmDanger(`Delete the image ${label}?${img.containers.length ? `\n${img.containers.length} containers use it; it is deleted forcibly.` : ''}`)) return;
+    if (!window.confirm(`Delete the image ${label}?${img.containers.length ? `\n${img.containers.length} containers use it; it is deleted forcibly.` : ''}`)) return;
     run(img.id, async () => {
       await api.removeImage(img.id, img.containers.length > 0);
       toast(`Deleted ${label}`, 'success');
@@ -46,11 +47,11 @@ export default function Images({ query }) {
     });
   };
   const total = (images.data || []).reduce((n, i) => n + i.size, 0);
-  return html`<${Page} title="Images" subtitle=${images.data ? `${images.data.length} images, ${bytes(total)} in all` : null} actions=${html`
+  return html`<${PageHeader} title="Images" subtitle=${images.data ? `${images.data.length} images, ${bytes(total)} in all` : null} actions=${html`
     <${PruneButton} title="Prune images" description="Delete dangling images (untagged layers no image uses)."
       allLabel="Also delete every image no container uses" prune=${api.pruneImages} onDone=${images.reload} />
     <button class="button button-small" onClick=${() => navigate('/images/build')}>Build</button>
-    <button class="button button-small button-primary" onClick=${() => setPulling(true)}>Pull image</button>`}>
+    <button class="button button-small button-primary" onClick=${() => setPulling(true)}>Pull image</button>`} />
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search tags or IDs" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
     </div>
@@ -62,7 +63,7 @@ export default function Images({ query }) {
             ${img.tags.length > 1 ? html`<div class="cell-sub">${img.tags.slice(1).join(', ')}</div>` : null}</td>
           <td><code>${shortId(img.id)}</code></td>
           <td class="nowrap">${bytes(img.size)}</td>
-          <td>${img.containers.length ? html`<${Badge} tone="blue" title=${img.containers.join('\n')}>${img.containers.length} containers<//>`
+          <td>${img.containers.length ? html`<${Badge} variant="info" title=${img.containers.join('\n')}>${img.containers.length} containers<//>`
             : img.dangling ? html`<${Badge}>Dangling<//>` : html`<span class="muted">Unused</span>`}</td>
           <td class="nowrap">${ago(img.created)}</td>
           <td class="actions"><span class="row-actions">
@@ -72,6 +73,5 @@ export default function Images({ query }) {
         </tr>`)}</tbody>
       <//>`}
     <//>
-    ${pulling ? html`<${PullDialog} onClose=${() => setPulling(false)} onPulled=${images.reload} />` : null}
-  <//>`;
+    ${pulling ? html`<${PullDialog} onClose=${() => setPulling(false)} onPulled=${images.reload} />` : null}`;
 }

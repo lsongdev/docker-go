@@ -1,6 +1,7 @@
 import { html, useMemo } from '@lsongdev/panel/html.js';
 import { useResource, useBusy } from '@lsongdev/panel/hooks.js';
-import { Page, Status, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, toast, Table } from '@lsongdev/scripts/react/components/index.js';
+import { Status, toastError } from '@lsongdev/panel/ui.js';
 import { ago, shortId } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, PruneButton, Resource } from '../docker.js';
@@ -19,7 +20,7 @@ export function ContainerActions({ c, onChange, compact }) {
     onChange?.();
   });
   const remove = () => {
-    if (!confirmDanger(`Delete the container ${c.name}?${c.state === 'running' ? '\nIt is running and will be stopped forcibly.' : ''}`)) return;
+    if (!window.confirm(`Delete the container ${c.name}?${c.state === 'running' ? '\nIt is running and will be stopped forcibly.' : ''}`)) return;
     run('remove', async () => {
       await api.removeContainer(c.id, { force: true });
       toast(`Deleted ${c.name}`, 'success');
@@ -49,9 +50,9 @@ export default function Containers({ query }) {
     (!state || (state === 'running' ? c.state === 'running' : c.state !== 'running')) &&
     (!search || `${c.name} ${c.image} ${c.project || ''}`.toLowerCase().includes(search.toLowerCase()))
   ), [containers.data, search, state]);
-  return html`<${Page} title="Containers" actions=${html`
+  return html`<${PageHeader} title="Containers" actions=${html`
     <${PruneButton} title="Prune containers" description="Delete every stopped container." prune=${api.pruneContainers} onDone=${containers.reload} />
-    <button class="button button-small button-primary" onClick=${() => navigate('/containers/new')}>New container</button>`}>
+    <button class="button button-small button-primary" onClick=${() => navigate('/containers/new')}>New container</button>`} />
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search names, images, projects" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
       <select class="input" style="max-width:140px" value=${state} onChange=${e => setQuery({ state: e.target.value })}>
@@ -72,6 +73,5 @@ export default function Containers({ query }) {
           <td class="actions"><${ContainerActions} c=${c} compact onChange=${containers.reload} /></td>
         </tr>`)}</tbody>
       <//>`}
-    <//>
-  <//>`;
+    <//>`;
 }

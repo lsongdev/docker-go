@@ -1,6 +1,7 @@
 import { html, useEffect } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, Status, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, Table } from '@lsongdev/scripts/react/components/index.js';
+import { Status } from '@lsongdev/panel/ui.js';
 import { ago, datetime } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { openJob, onJobsChanged, Resource } from '../docker.js';
@@ -20,7 +21,7 @@ export default function Jobs() {
     const t = setTimeout(jobs.reload, 2000);
     return () => clearTimeout(t);
   }, [jobs.data]);
-  return html`<${Page} title="Jobs" subtitle="Long operations such as installs, pulls and builds run in the background; their logs stay in memory">
+  return html`<${PageHeader} title="Jobs" subtitle="Long operations such as installs, pulls and builds run in the background; their logs stay in memory" />
     <${Resource} resource=${jobs} empty="No jobs yet">${list => html`
       <${Table}>
         <thead><tr><th>Job</th><th>Status</th><th>Started</th><th>Duration</th><th class="actions"></th></tr></thead>
@@ -32,6 +33,5 @@ export default function Jobs() {
           <td class="actions"><button class="button button-small" onClick=${() => openJob(api, j.id, jobs.reload)}>Log</button></td>
         </tr>`)}</tbody>
       <//>`}
-    <//>
-  <//>`;
+    <//>`;
 }

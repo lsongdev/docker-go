@@ -1,6 +1,7 @@
 import { html, useEffect, useRef, useState } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, Status, KV, Tabs, LogView, Badge, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, KeyValue, Tabs, LogView, Badge, Table } from '@lsongdev/scripts/react/components/index.js';
+import { Status } from '@lsongdev/panel/ui.js';
 import { ago, bytes, datetime, percent, shortId } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, Resource, Notice } from '../docker.js';
@@ -12,29 +13,28 @@ export default function Container({ params, query }) {
   useDockerEvents(['container'], e => { if (params.id.startsWith(e.id) || e.id.startsWith(params.id)) container.reload(); });
   const tab = query.tab || 'overview';
   const c = container.data;
-  return html`<${Page} title=${c?.name || shortId(params.id)}
+  return html`<${PageHeader} title=${c?.name || shortId(params.id)}
     subtitle=${c ? html`<${Status} state=${c.state} /> ${c.image}` : null}
-    actions=${c ? html`<${ContainerActions} c=${c} onChange=${r => r === 'removed' ? navigate('/containers') : container.reload()} />` : null}>
+    actions=${c ? html`<${ContainerActions} c=${c} onChange=${r => r === 'removed' ? navigate('/containers') : container.reload()} />` : null} />
     <${Resource} resource=${container}>${c => html`
       <${Tabs} active=${tab} onChange=${t => setQuery({ tab: t })} tabs=${[['overview', 'Overview'], ['logs', 'Logs'], ['stats', 'Stats'], ['terminal', 'Terminal']]} />
       ${tab === 'overview' ? html`<${Overview} c=${c} />` : null}
       ${tab === 'logs' ? html`<${Logs} id=${c.id} />` : null}
-      ${tab === 'stats' ? (c.running ? html`<${Stats} id=${c.id} />` : html`<${Notice} tone="info">The container is not running<//>`) : null}
-      ${tab === 'terminal' ? (c.running ? html`<${Terminal} id=${c.id} />` : html`<${Notice} tone="info">The container is not running, so no terminal can open<//>`) : null}`}
-    <//>
-  <//>`;
+      ${tab === 'stats' ? (c.running ? html`<${Stats} id=${c.id} />` : html`<${Notice} variant="info">The container is not running<//>`) : null}
+      ${tab === 'terminal' ? (c.running ? html`<${Terminal} id=${c.id} />` : html`<${Notice} variant="info">The container is not running, so no terminal can open<//>`) : null}`}
+    <//>`;
 }
 
 function Overview({ c }) {
   const { href } = usePanel();
   return html`<div class="grid-2">
     <div class="card"><h2>Details</h2>
-      <${KV} items=${[
+      <${KeyValue} items=${[
         ['ID', html`<code>${shortId(c.id)}</code>`],
         ['Image', html`<a href=${href(`/images/${c.image_id}`)}>${c.image}</a>`],
         ['Status', html`<${Status} state=${c.state} /> ${c.health ? html`<${Status} state=${c.health} />` : null}
           ${c.exit_code && !c.running ? html` <span class="muted">exit code ${c.exit_code}</span>` : null}
-          ${c.oom_killed ? html` <${Badge} tone="red">OOM<//>` : null}`],
+          ${c.oom_killed ? html` <${Badge} variant="danger">OOM<//>` : null}`],
         ['Error', c.error],
         ['Created', datetime(c.created)],
         [c.running ? 'Started' : 'Stopped', c.running ? `${datetime(c.started_at)} (${ago(c.started_at)})` : datetime(c.finished_at)],

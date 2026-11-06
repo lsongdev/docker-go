@@ -1,6 +1,6 @@
 import { html, useEffect, useState } from '@lsongdev/panel/html.js';
 import { useResource } from '@lsongdev/panel/hooks.js';
-import { Page, Badge } from '@lsongdev/panel/ui.js';
+import { PageHeader, Badge } from '@lsongdev/scripts/react/components/index.js';
 import { datetime } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { startJob, Resource } from '../docker.js';
@@ -27,8 +27,8 @@ export default function Store({ query }) {
   const sync = () => startJob(api, () => api.syncCatalog(), { onDone: () => { catalog.reload(); categories.reload(); } }).catch(() => {});
   const loadedAt = catalog.data?.loaded_at;
   const synced = loadedAt && !loadedAt.startsWith('0001');
-  return html`<${Page} title="App store" subtitle=${synced ? `Catalog updated ${datetime(loadedAt)}` : 'The catalog has not been synced yet'}
-    actions=${html`<button class="button button-small" onClick=${sync}>Sync catalog</button>`}>
+  return html`<${PageHeader} title="App store" subtitle=${synced ? `Catalog updated ${datetime(loadedAt)}` : 'The catalog has not been synced yet'}
+    actions=${html`<button class="button button-small" onClick=${sync}>Sync catalog</button>`} />
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search apps" value=${search} onInput=${e => setSearch(e.target.value)} />
     </div>
@@ -49,9 +49,8 @@ export default function Store({ query }) {
             </div>
           </div>
           <p>${app.short_desc}</p>
-          <div>${app.installed ? html`<${Badge} tone="green">Installed<//>` : null}</div>
+          <div>${app.installed ? html`<${Badge} variant="success">Installed<//>` : null}</div>
         </a>`)}
       </div>`}
-    <//>
-  <//>`;
+    <//>`;
 }

@@ -1,5 +1,5 @@
 import { html, useState } from '@lsongdev/panel/html.js';
-import { Page, Field, toast } from '@lsongdev/panel/ui.js';
+import { PageHeader, Field, toast } from '@lsongdev/scripts/react/components/index.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { startJob, Notice } from '../docker.js';
 
@@ -32,7 +32,7 @@ export default function StackNew() {
       setSaving(false);
     }
   };
-  return html`<${Page} title="New stack" back=${{ href: href('/stacks'), label: 'Compose' }}>
+  return html`<${PageHeader} title="New stack" back=${{ href: href('/stacks'), label: 'Compose' }} />
     <form class="form card" onSubmit=${e => { e.preventDefault(); save(true); }}>
       <${Notice} error=${error} />
       <${Field} label="Name" required hint="Lowercase letters, digits, - and _; the compose project name">
@@ -46,6 +46,5 @@ export default function StackNew() {
         <button type="button" class="button" disabled=${saving} onClick=${() => save(false)}>Save only</button>
         <a class="button" href=${href('/stacks')}>Cancel</a>
       </div>
-    </form>
-  <//>`;
+    </form>`;
 }

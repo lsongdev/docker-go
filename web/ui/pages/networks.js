@@ -1,6 +1,7 @@
 import { html } from '@lsongdev/panel/html.js';
 import { useResource, useBusy } from '@lsongdev/panel/hooks.js';
-import { Page, Badge, toast, toastError, confirmDanger, Table } from '@lsongdev/panel/ui.js';
+import { PageHeader, Badge, toast, Table } from '@lsongdev/scripts/react/components/index.js';
+import { toastError } from '@lsongdev/panel/ui.js';
 import { shortId } from '@lsongdev/panel/format.js';
 import { usePanel } from '@lsongdev/panel/panel.js';
 import { useDockerEvents, PruneButton, Resource } from '../docker.js';
@@ -11,16 +12,16 @@ export default function Networks() {
   useDockerEvents(['network', 'container'], networks.reload);
   const [busy, run] = useBusy(toastError);
   const remove = n => {
-    if (!confirmDanger(`Delete the network ${n.name}?`)) return;
+    if (!window.confirm(`Delete the network ${n.name}?`)) return;
     run(n.id, async () => {
       await api.removeNetwork(n.id);
       toast(`Deleted ${n.name}`, 'success');
       networks.reload();
     });
   };
-  return html`<${Page} title="Networks" actions=${html`
+  return html`<${PageHeader} title="Networks" actions=${html`
     <${PruneButton} title="Prune networks" description="Delete every custom network no container uses." prune=${api.pruneNetworks} onDone=${networks.reload} />
-    <button class="button button-small button-primary" onClick=${() => navigate('/networks/new')}>New network</button>`}>
+    <button class="button button-small button-primary" onClick=${() => navigate('/networks/new')}>New network</button>`} />
     <${Resource} resource=${networks} empty="No networks">${list => html`
       <${Table}>
         <thead><tr><th>Name</th><th>Driver</th><th>Subnets</th><th>Containers</th><th>Attributes</th><th class="actions">Actions</th></tr></thead>
@@ -31,13 +32,12 @@ export default function Networks() {
           <td>${n.containers.length || html`<span class="muted">0</span>`}</td>
           <td><div class="tags">
             ${n.builtin ? html`<${Badge}>Built-in<//>` : null}
-            ${n.internal ? html`<${Badge} tone="amber">Internal<//>` : null}
+            ${n.internal ? html`<${Badge} variant="warning">Internal<//>` : null}
             ${n.ipv6 ? html`<${Badge}>IPv6<//>` : null}
-            ${n.project ? html`<${Badge} tone="blue">${n.project}<//>` : null}
+            ${n.project ? html`<${Badge} variant="info">${n.project}<//>` : null}
           </div></td>
           <td class="actions">${n.builtin ? null : html`<button class="button button-small button-danger" disabled=${busy[n.id]} onClick=${() => remove(n)}>Delete</button>`}</td>
         </tr>`)}</tbody>
       <//>`}
-    <//>
-  <//>`;
+    <//>`;
 }
