@@ -18,7 +18,7 @@ export default function Apps() {
             <${AppIcon} id=${a.id} />
             <div style="min-width:0">
               <h3>${a.app?.name || a.id}</h3>
-              <div class="cell-sub">${a.version}${a.update_available ? html` → <span style="color:var(--primary)">${a.latest_version}</span>` : null}</div>
+              <div class="cell-sub">${a.version}${a.update_available ? html` → <span style="color:var(--color-primary)">${a.latest_version}</span>` : null}</div>
             </div>
           </a>
           <div class="tags">

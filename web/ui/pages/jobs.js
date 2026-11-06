@@ -25,7 +25,7 @@ export default function Jobs() {
       <${Table}>
         <thead><tr><th>Job</th><th>Status</th><th>Started</th><th>Duration</th><th class="actions"></th></tr></thead>
         <tbody>${list.map(j => html`<tr key=${j.id}>
-          <td><div class="cell-main">${j.title}</div>${j.error ? html`<div class="cell-sub" style="color:var(--danger)">${j.error}</div>` : null}</td>
+          <td><div class="cell-main">${j.title}</div>${j.error ? html`<div class="cell-sub" style="color:var(--color-danger)">${j.error}</div>` : null}</td>
           <td><${Status} state=${j.status} /></td>
           <td class="nowrap" title=${datetime(j.started_at)}>${ago(j.started_at)}</td>
           <td class="nowrap">${duration(j)}</td>

@@ -4,17 +4,64 @@
   "title": "Docker",
   "icon": "◧",
   "entry": "module.js",
-  "styles": ["stylesheets.css", "style.css", "docker.css"],
+  "styles": [
+    "docker.css"
+  ],
   "home": "/",
   "nav": [
-    { "path": "/", "title": "Overview", "icon": "◎", "group": "Overview" },
-    { "path": "/containers", "title": "Containers", "icon": "▣", "group": "Resources" },
-    { "path": "/images", "title": "Images", "icon": "◫", "group": "Resources" },
-    { "path": "/volumes", "title": "Volumes", "icon": "⛁", "group": "Resources" },
-    { "path": "/networks", "title": "Networks", "icon": "⇄", "group": "Resources" },
-    { "path": "/stacks", "title": "Compose", "icon": "☰", "group": "Orchestration" },
-    { "path": "/store", "title": "App Store", "icon": "✦", "group": "Apps" },
-    { "path": "/apps", "title": "Installed", "icon": "▤", "group": "Apps" },
-    { "path": "/jobs", "title": "Jobs", "icon": "⟳", "group": "System" }
+    {
+      "path": "/",
+      "title": "Overview",
+      "icon": "◎",
+      "group": "Overview"
+    },
+    {
+      "path": "/containers",
+      "title": "Containers",
+      "icon": "▣",
+      "group": "Resources"
+    },
+    {
+      "path": "/images",
+      "title": "Images",
+      "icon": "◫",
+      "group": "Resources"
+    },
+    {
+      "path": "/volumes",
+      "title": "Volumes",
+      "icon": "⛁",
+      "group": "Resources"
+    },
+    {
+      "path": "/networks",
+      "title": "Networks",
+      "icon": "⇄",
+      "group": "Resources"
+    },
+    {
+      "path": "/stacks",
+      "title": "Compose",
+      "icon": "☰",
+      "group": "Orchestration"
+    },
+    {
+      "path": "/store",
+      "title": "App Store",
+      "icon": "✦",
+      "group": "Apps"
+    },
+    {
+      "path": "/apps",
+      "title": "Installed",
+      "icon": "▤",
+      "group": "Apps"
+    },
+    {
+      "path": "/jobs",
+      "title": "Jobs",
+      "icon": "⟳",
+      "group": "System"
+    }
   ]
 }
