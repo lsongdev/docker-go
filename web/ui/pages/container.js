@@ -1,6 +1,7 @@
-import { html, useEffect, useRef, useState } from '../lib/html.js';
+import { html, useEffect, useState } from '../lib/html.js';
 import { useResource } from '../lib/hooks.js';
-import { PageHeader, KeyValue, Tabs, LogView, Badge, Table } from '@lsongdev/scripts/react/components/index.js';
+import { PageHeader, KeyValue, Tabs, LogView, Badge, Table, Terminal as TerminalView } from '@lsongdev/scripts/react/components/index.js';
+import { terminalSocket } from '../lib/terminal.js';
 import { Status } from '../lib/ui.js';
 import { ago, bytes, datetime, percent, shortId } from '../lib/format.js';
 import { usePanel } from '../lib/panel.js';
@@ -146,46 +147,22 @@ function Stats({ id }) {
   </div>`;
 }
 
+// xterm is large, so it loads only when a terminal opens.
+const XTERM_CSS = new URL('../node_modules/@xterm/xterm/css/xterm.css', import.meta.url).href;
+const loadXterm = () => Promise.all([
+  import('../node_modules/@xterm/xterm/lib/xterm.mjs'),
+  import('../node_modules/@xterm/addon-fit/lib/addon-fit.mjs'),
+]).then(([{ Terminal }, { FitAddon }]) => ({ Terminal, FitAddon }));
+
 function Terminal({ id }) {
   const { api } = usePanel();
-  const ref = useRef();
   const [status, setStatus] = useState('connecting');
   const [session, setSession] = useState(0);
-  useEffect(() => {
-    let disposed = false;
-    let cleanup = () => {};
-    // xterm is large, so it is loaded only when a terminal is opened.
-    // Inside a panel the module lives in a shadow root, which document
-    // styles do not reach: add the stylesheet where the terminal renders.
-    const root = ref.current.getRootNode();
-    const target = root instanceof ShadowRoot ? root : document.head;
-    if (!root.querySelector('link[data-xterm]')) {
-      const link = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: new URL('../node_modules/@xterm/xterm/css/xterm.css', import.meta.url).href });
-      link.dataset.xterm = '';
-      target.append(link);
-    }
-    Promise.all([import('../node_modules/@xterm/xterm/lib/xterm.mjs'), import('../node_modules/@xterm/addon-fit/lib/addon-fit.mjs')]).then(([{ Terminal }, { FitAddon }]) => {
-      if (disposed) return;
-      const term = new Terminal({ cursorBlink: true, fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 13, allowTransparency: true, theme: { background: '#00000000' } });
-      const fit = new FitAddon();
-      term.loadAddon(fit);
-      term.open(ref.current);
-      fit.fit();
-      setStatus('connecting');
-      const ws = new WebSocket(api.terminalURL(id, { cols: term.cols, rows: term.rows }));
-      ws.binaryType = 'arraybuffer';
-      const encoder = new TextEncoder();
-      ws.onopen = () => { setStatus('open'); term.focus(); };
-      ws.onmessage = e => term.write(new Uint8Array(e.data));
-      ws.onclose = e => { setStatus('closed'); term.write(`\r\n\x1b[90m[${e.reason || 'Connection closed'}]\x1b[0m\r\n`); };
-      const input = term.onData(data => ws.readyState === 1 && ws.send(encoder.encode(data)));
-      const resize = term.onResize(({ cols, rows }) => ws.readyState === 1 && ws.send(JSON.stringify({ type: 'resize', cols, rows })));
-      const observer = new ResizeObserver(() => fit.fit());
-      observer.observe(ref.current);
-      cleanup = () => { observer.disconnect(); input.dispose(); resize.dispose(); ws.close(); term.dispose(); };
-    }).catch(() => setStatus('error'));
-    return () => { disposed = true; cleanup(); };
-  }, [id, session]);
+  const connect = terminalSocket(size => api.terminalURL(id, size), {
+    onOpen: () => setStatus('open'),
+    onClose: (e, term) => { setStatus('closed'); term.write(`\r\n\x1b[90m[${e.reason || 'Connection closed'}]\x1b[0m\r\n`); },
+  });
+  const start = term => { setStatus('connecting'); return connect(term); };
   return html`<div>
     <div class="toolbar">
       <${Status} state=${status === 'open' ? 'running' : status === 'connecting' ? 'starting' : 'stopped'} />
@@ -193,6 +170,6 @@ function Terminal({ id }) {
       <span class="spacer"></span>
       ${status === 'closed' ? html`<button class="button button-small" onClick=${() => setSession(s => s + 1)}>Reconnect</button>` : null}
     </div>
-    <div class="terminal-frame" ref=${ref}></div>
+    <${TerminalView} key=${`${id}:${session}`} load=${loadXterm} css=${XTERM_CSS} connect=${start} onError=${() => setStatus('error')} />
   </div>`;
 }
