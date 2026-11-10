@@ -7,6 +7,7 @@ import { useResource } from './lib/hooks.js';
 import { ConfirmButton, LogView, openDialog, toast, Loading, Empty } from '@lsongdev/scripts/react/components/index.js';
 import { Modal, Status, toastError } from './lib/ui.js';
 import { Alert } from '@lsongdev/scripts/react/components/index.js';
+import { sseLines } from '@lsongdev/scripts/react/hooks/line-stream.js';
 import { PanelContext } from './lib/panel.js';
 import { bytes } from './lib/format.js';
 
@@ -58,6 +59,11 @@ export function dockerAPI(client) {
     containerAction: (id, action, body) => post(`containers/${enc(id)}/${action}`, body),
     removeContainer: (id, { force = false, volumes = false } = {}) => del(`containers/${enc(id)}`, { query: { force, volumes } }),
     containerLogs: (id, query, opts) => get(`containers/${enc(id)}/logs`, { ...opts, query }),
+    // The followed log as SSE: "line" events ({ stream, text }), then "end",
+    // or an "error" event carrying { message }.
+    containerLogLines: (id, query) => sseLines(client.url(`containers/${enc(id)}/logs`, { ...query, follow: 1 }).href, {
+      event: 'line', parse: JSON.parse, endEvent: 'end', errorEvent: 'error',
+    }),
     pruneContainers: () => post('containers/prune'),
     terminalURL: (id, query) => client.socketURL(`containers/${enc(id)}/terminal`, query),
 

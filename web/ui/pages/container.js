@@ -1,5 +1,6 @@
 import { html, useEffect, useState } from '../lib/html.js';
 import { useResource } from '../lib/hooks.js';
+import { useLineStream } from '@lsongdev/scripts/react/hooks/line-stream.js';
 import { PageHeader, KeyValue, Tabs, LogView, Badge, Table, Terminal as TerminalView } from '@lsongdev/scripts/react/components/index.js';
 import { terminalSocket } from '../lib/terminal.js';
 import { Status } from '../lib/ui.js';
@@ -75,28 +76,22 @@ function Overview({ c }) {
 
 function Logs({ id }) {
   const { api } = usePanel();
-  const [lines, setLines] = useState([]);
   const [follow, setFollow] = useState(true);
   const [tail, setTail] = useState('500');
+  // Following streams the log; otherwise one snapshot is fetched.
+  const live = useLineStream(follow ? api.containerLogLines(id, { tail }) : null);
+  const [snapshot, setSnapshot] = useState([]);
   const [error, setError] = useState(null);
   useEffect(() => {
-    setLines([]);
+    setSnapshot([]);
     setError(null);
-    if (follow) {
-      const buffer = [];
-      let scheduled = false;
-      // Batch bursts of lines into one render.
-      const flush = () => { scheduled = false; const batch = buffer.splice(0); setLines(l => [...l, ...batch].slice(-5000)); };
-      return api.stream(`containers/${encodeURIComponent(id)}/logs`, { follow: 1, tail }, {
-        line: l => { buffer.push(l); if (!scheduled) { scheduled = true; requestAnimationFrame(flush); } },
-        error: e => setError(new Error(e.message)),
-        onerror: () => setError(new Error('The log stream was cut off')),
-      });
-    }
+    if (follow) return undefined;
     const controller = new AbortController();
-    api.containerLogs(id, { tail }, { signal: controller.signal }).then(setLines).catch(e => e.name !== 'AbortError' && setError(e));
+    api.containerLogs(id, { tail }, { signal: controller.signal }).then(setSnapshot).catch(e => e.name !== 'AbortError' && setError(e));
     return () => controller.abort();
   }, [id, follow, tail]);
+  const lines = follow ? live.lines : snapshot;
+  const clear = () => (follow ? live.clear() : setSnapshot([]));
   return html`<div>
     <div class="toolbar">
       <label class="field-check"><input type="checkbox" checked=${follow} onChange=${e => setFollow(e.target.checked)} />Follow</label>
@@ -104,10 +99,10 @@ function Logs({ id }) {
         ${['100', '500', '2000', 'all'].map(n => html`<option value=${n}>${n === 'all' ? 'All' : `Last ${n} lines`}</option>`)}
       </select>
       <span class="spacer"></span>
-      <button class="button button-small" onClick=${() => setLines([])}>Clear</button>
+      <button class="button button-small" onClick=${clear}>Clear</button>
     </div>
-    <${Notice} error=${error} />
-    <${LogView} lines=${lines} follow=${follow} />
+    <${Notice} error=${follow ? live.error : error} />
+    <${LogView} lines=${lines} follow=${follow} ansi />
   </div>`;
 }
 
