@@ -166,7 +166,7 @@ function Terminal({ id }) {
     }
     Promise.all([import('../node_modules/@xterm/xterm/lib/xterm.mjs'), import('../node_modules/@xterm/addon-fit/lib/addon-fit.mjs')]).then(([{ Terminal }, { FitAddon }]) => {
       if (disposed) return;
-      const term = new Terminal({ cursorBlink: true, fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 13, theme: { background: '#000000' } });
+      const term = new Terminal({ cursorBlink: true, fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 13, allowTransparency: true, theme: { background: '#00000000' } });
       const fit = new FitAddon();
       term.loadAddon(fit);
       term.open(ref.current);
@@ -193,6 +193,6 @@ function Terminal({ id }) {
       <span class="spacer"></span>
       ${status === 'closed' ? html`<button class="button button-small" onClick=${() => setSession(s => s + 1)}>Reconnect</button>` : null}
     </div>
-    <div class="terminal" ref=${ref}></div>
+    <div class="terminal-frame" ref=${ref}></div>
   </div>`;
 }
