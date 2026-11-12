@@ -18,13 +18,13 @@ export default function Stack({ params, query }) {
   return html`<${PageHeader} title=${params.name}
     subtitle=${s ? html`<${Status} state=${s.status} /> <span class="mono">${s.dir}</span>` : null}
     actions=${s ? html`
-      <button class="button button-small button-primary" onClick=${() => act('up')}>Deploy</button>
+      <button class="button button-primary" onClick=${() => act('up')}>Deploy</button>
       ${s.status !== 'inactive' ? html`
-        <button class="button button-small" onClick=${() => act('restart')}>Restart</button>
-        <button class="button button-small" onClick=${() => act('stop')}>Stop</button>
-        <button class="button button-small" onClick=${() => act('down')}>Down</button>` : null}
-      <button class="button button-small" onClick=${() => act('pull')}>Pull images</button>
-      ${s.managed ? html`<${ConfirmButton} className="button button-small" label="Delete" title=${`Delete ${params.name}`} confirmLabel="Delete"
+        <button class="button" onClick=${() => act('restart')}>Restart</button>
+        <button class="button" onClick=${() => act('stop')}>Stop</button>
+        <button class="button" onClick=${() => act('down')}>Down</button>` : null}
+      <button class="button" onClick=${() => act('pull')}>Pull images</button>
+      ${s.managed ? html`<${ConfirmButton} className="button" label="Delete" title=${`Delete ${params.name}`} confirmLabel="Delete"
         description="Stop the stack, delete its containers and networks, and remove the project directory." checkbox="Also delete its volumes (their data is lost for good)" onConfirm=${remove} />` : null}` : null} />
     <${Resource} resource=${stack}>${s => html`
       ${s.managed ? null : html`<${Notice} variant="info">This project was created outside this module, so its files are read-only; it can still be deployed, stopped and so on.<//>`}
@@ -79,7 +79,7 @@ function Editor({ stack, onSaved }) {
         <textarea class="input code" spellcheck="false" readOnly=${readOnly} value=${compose} onInput=${e => setCompose(e.target.value)}></textarea><//>
       <${Field} label=".env"><textarea class="input code" spellcheck="false" readOnly=${readOnly} value=${env} onInput=${e => setEnv(e.target.value)}></textarea><//>
     </div>
-    ${readOnly ? null : html`<div class="button-actions">
+    ${readOnly ? null : html`<div class="form-actions">
       <button class="button button-primary" disabled=${!dirty || saving} onClick=${() => save(true)}>Save and redeploy</button>
       <button class="button" disabled=${!dirty || saving} onClick=${() => save(false)}>Save only</button>
       ${dirty ? html`<button class="button button-ghost" onClick=${() => { setCompose(stack.compose); setEnv(stack.env); }}>Discard changes</button>` : null}

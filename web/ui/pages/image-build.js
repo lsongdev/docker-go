@@ -47,11 +47,11 @@ export default function ImageBuild() {
         <${Field} label="Dockerfile path" hint="Relative to the repository root"><input class="input mono" value=${form.dockerfile} onInput=${set('dockerfile')} placeholder="Dockerfile" /><//>
       </div>` : null}
       <${Field} label="Build arguments" hint="KEY=VALUE, for the ARG instructions in the Dockerfile"><${ListInput} values=${args} onChange=${setArgs} placeholder="VERSION=1.0" /><//>
-      <div class="button-actions">
+      <div class="row-actions">
         <label class="field-check"><input type="checkbox" checked=${form.pull} onChange=${set('pull')} />Pull newer base images</label>
         <label class="field-check"><input type="checkbox" checked=${form.no_cache} onChange=${set('no_cache')} />Do not use the cache</label>
       </div>
-      <div class="button-actions">
+      <div class="form-actions">
         <button class="button button-primary">Build</button>
         <a class="button" href=${href('/images')}>Cancel</a>
       </div>

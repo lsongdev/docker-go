@@ -27,7 +27,7 @@ export function ContainerActions({ c, onChange, compact }) {
       onChange?.('removed');
     });
   };
-  const size = 'button button-small';
+  const size = compact ? 'button button-small' : 'button';
   const running = c.state === 'running', paused = c.state === 'paused';
   return html`<span class=${compact ? 'row-actions' : 'page-actions'}>
     ${running ? html`
@@ -52,7 +52,7 @@ export default function Containers({ query }) {
   ), [containers.data, search, state]);
   return html`<${PageHeader} title="Containers" actions=${html`
     <${PruneButton} title="Prune containers" description="Delete every stopped container." prune=${api.pruneContainers} onDone=${containers.reload} />
-    <button class="button button-small button-primary" onClick=${() => navigate('/containers/new')}>New container</button>`} />
+    <button class="button button-primary" onClick=${() => navigate('/containers/new')}>New container</button>`} />
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search names, images, projects" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
       <select class="input" style="max-width:140px" value=${state} onChange=${e => setQuery({ state: e.target.value })}>

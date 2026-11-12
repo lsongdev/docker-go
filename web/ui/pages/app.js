@@ -34,13 +34,13 @@ function AppDetail({ id, query }) {
   }).catch(() => {});
   const running = a && (a.status === 'running' || a.status === 'partial');
   return html`<${PageHeader} title=${metadata?.name || a?.app?.name || id}
-    actions=${!d ? null : !a ? html`<button class="button button-small button-primary" type="button" onClick=${() => setQuery({ tab: 'settings' })} disabled=${!d.supported || submitting}>${submitting ? 'Installing…' : 'Install'}</button>` : html`
+    actions=${!d ? null : !a ? html`<button class="button button-primary" type="button" onClick=${() => setQuery({ tab: 'settings' })} disabled=${!d.supported || submitting}>${submitting ? 'Installing…' : 'Install'}</button>` : html`
       ${a.url && a.status === 'running' ? html`<a class="button button-small button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
       ${running
-        ? html`<button class="button button-small" disabled=${submitting} onClick=${() => act('restart')}>Restart</button><button class="button button-small" disabled=${submitting} onClick=${() => act('stop')}>Stop</button>`
-        : html`<button class="button button-small" disabled=${submitting} onClick=${() => act('start')}>Start</button>`}
-      ${a.update_available ? html`<button class="button button-small" onClick=${update}>Update to ${a.latest_version}</button>` : null}
-      <${ConfirmButton} className="button button-small" label="Uninstall" title=${`Uninstall ${metadata?.name || id}`} confirmLabel="Uninstall"
+        ? html`<button class="button" disabled=${submitting} onClick=${() => act('restart')}>Restart</button><button class="button" disabled=${submitting} onClick=${() => act('stop')}>Stop</button>`
+        : html`<button class="button" disabled=${submitting} onClick=${() => act('start')}>Start</button>`}
+      ${a.update_available ? html`<button class="button" onClick=${update}>Update to ${a.latest_version}</button>` : null}
+      <${ConfirmButton} className="button" label="Uninstall" title=${`Uninstall ${metadata?.name || id}`} confirmLabel="Uninstall"
         description="Stop the app and delete its containers and networks." checkbox="Keep the data directory and volumes for a later reinstall" onConfirm=${uninstall} />`} />
     <${Resource} resource=${detail}>${d => html`
       ${d.installed && !d.catalog ? html`<${Notice} variant="warning">This app was removed from the catalog. It can still be started, stopped and uninstalled, but not updated or reconfigured.<//>` : null}
@@ -137,6 +137,6 @@ function Settings({ a, exposable, onSaved }) {
       <input class="input" type="number" min="1" max="65535" required value=${port} onInput=${e => setPort(e.target.value)} /><//>` : null}
     ${exposable || a.domain ? html`<${DomainField} value=${domain} onChange=${setDomain} error=${errors.domain} />` : null}
     <${AppForm} fields=${fields} values=${values} errors=${errors} onChange=${setValues} />
-    <div class="button-actions"><button class="button button-primary">Save and redeploy</button></div>
+    <div class="form-actions"><button class="button button-primary">Save and redeploy</button></div>
   </form>`;
 }

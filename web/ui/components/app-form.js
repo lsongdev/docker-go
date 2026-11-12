@@ -98,6 +98,6 @@ export function InstallForm({ app, exposable, submitting, setSubmitting, onDone 
     <${AppForm} fields=${app.form_fields} values=${values} errors=${errors} onChange=${setValues} />
     ${generated.length ? html`<div class="field-hint">Generated for you: ${generated.map(f => html`<${Badge}>${f.label}<//> `)}</div>` : null}
     </fieldset>
-    <div class="button-actions"><button class="button button-primary" disabled=${submitting}>Install ${app.name}</button></div>
+    <div class="form-actions"><button class="button button-primary" disabled=${submitting}>Install ${app.name}</button></div>
   </form>`;
 }

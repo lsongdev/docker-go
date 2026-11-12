@@ -23,7 +23,7 @@ function PullDialog({ onClose, onPulled }) {
         <input class="input" autofocus required value=${image} onInput=${e => setImage(e.target.value)} placeholder="nginx:alpine" /><//>
       <${Field} label="Platform" hint="Optional, such as linux/amd64; empty for the host's">
         <input class="input" value=${platform} onInput=${e => setPlatform(e.target.value)} /><//>
-      <div class="button-actions"><button class="button button-primary">Pull</button><button type="button" class="button" onClick=${onClose}>Cancel</button></div>
+      <div class="form-actions"><button class="button button-primary">Pull</button><button type="button" class="button" onClick=${onClose}>Cancel</button></div>
     </form>
   <//>`;
 }
@@ -50,8 +50,8 @@ export default function Images({ query }) {
   return html`<${PageHeader} title="Images" subtitle=${images.data ? `${images.data.length} images, ${bytes(total)} in all` : null} actions=${html`
     <${PruneButton} title="Prune images" description="Delete dangling images (untagged layers no image uses)."
       allLabel="Also delete every image no container uses" prune=${api.pruneImages} onDone=${images.reload} />
-    <button class="button button-small" onClick=${() => navigate('/images/build')}>Build</button>
-    <button class="button button-small button-primary" onClick=${() => setPulling(true)}>Pull image</button>`} />
+    <button class="button" onClick=${() => navigate('/images/build')}>Build</button>
+    <button class="button button-primary" onClick=${() => setPulling(true)}>Pull image</button>`} />
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search tags or IDs" value=${search} onInput=${e => setQuery({ q: e.target.value })} />
     </div>

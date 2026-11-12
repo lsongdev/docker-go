@@ -11,7 +11,7 @@ export default function Apps() {
   const apps = useResource(signal => api.apps({ signal }));
   useDockerEvents(['container'], apps.reload, 800);
   return html`<${PageHeader} title="Installed apps"
-    actions=${html`<button class="button button-small button-primary" onClick=${() => navigate('/store')}>Browse the app store</button>`} />
+    actions=${html`<button class="button button-primary" onClick=${() => navigate('/store')}>Browse the app store</button>`} />
     <${Resource} resource=${apps} empty=${html`No apps installed yet. Have a look in the <a href=${href('/store')}>app store</a>.`}>${list => html`
       <div class="app-grid">${list.map(a => html`
         <div class="card app-card" key=${a.id}>
@@ -27,7 +27,7 @@ export default function Apps() {
             ${a.update_available ? html`<${Badge} variant="info">Update available<//>` : null}
             ${a.app ? null : html`<${Badge} variant="warning">Removed from the catalog<//>`}
           </div>
-          <div class="button-actions">
+          <div class="row-actions">
             ${a.url && a.status === 'running' ? html`<a class="button button-small button-primary" href=${a.url} target="_blank" rel="noopener">Open ↗</a>` : null}
             <a class="button button-small" href=${href(`/apps/${a.id}`)}>Manage</a>
           </div>

@@ -22,7 +22,7 @@ export default function Image({ params }) {
   return html`<${PageHeader} title=${img?.tags[0] || shortId(params.id)} subtitle=${img ? html`<code>${img.id}</code>` : null}
     actions=${img ? html`
       <a class="button button-small button-primary" href=${href('/containers/new', { image: img.tags[0] || img.id })}>Run container</a>
-      <button class="button button-small button-danger" onClick=${remove}>Delete</button>` : null} />
+      <button class="button button-danger" onClick=${remove}>Delete</button>` : null} />
     <${Resource} resource=${image}>${img => html`
       <div class="grid-2">
         <div class="card"><h2>Details</h2>

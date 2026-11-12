@@ -32,6 +32,6 @@ export default function VolumeNew() {
           <${ListInput} values=${options} onChange=${setOptions} placeholder="type=nfs" /><//>
         <${Field} label="Labels" hint="KEY=VALUE"><${ListInput} values=${labels} onChange=${setLabels} /><//>
       </div>
-      <div class="button-actions"><button class="button button-primary">Create</button><a class="button" href=${href('/volumes')}>Cancel</a></div>
+      <div class="form-actions"><button class="button button-primary">Create</button><a class="button" href=${href('/volumes')}>Cancel</a></div>
     </form>`;
 }

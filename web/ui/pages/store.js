@@ -28,7 +28,7 @@ export default function Store({ query }) {
   const loadedAt = catalog.data?.loaded_at;
   const synced = loadedAt && !loadedAt.startsWith('0001');
   return html`<${PageHeader} title="App store" subtitle=${synced ? `Catalog updated ${datetime(loadedAt)}` : 'The catalog has not been synced yet'}
-    actions=${html`<button class="button button-small" onClick=${sync}>Sync catalog</button>`} />
+    actions=${html`<button class="button" onClick=${sync}>Sync catalog</button>`} />
     <div class="toolbar">
       <input class="input" type="search" placeholder="Search apps" value=${search} onInput=${e => setSearch(e.target.value)} />
     </div>

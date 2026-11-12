@@ -77,12 +77,12 @@ export default function ContainerNew({ query }) {
           <${Field} label="Working directory"><input class="input" value=${form.working_dir} onInput=${set('working_dir')} /><//>
           <${Field} label="User"><input class="input" value=${form.user} onInput=${set('user')} placeholder="1000:1000" /><//>
         </div>
-        <div class="button-actions" style="margin-top:12px">
+        <div class="row-actions" style="margin-top:12px">
           <label class="field-check"><input type="checkbox" checked=${form.tty} onChange=${set('tty')} />Allocate a TTY</label>
           <label class="field-check"><input type="checkbox" checked=${form.privileged} onChange=${set('privileged')} />Privileged</label>
         </div>
       </details>
-      <div class="button-actions">
+      <div class="form-actions">
         <button class="button button-primary" disabled=${submitting}>Create</button>
         <label class="field-check"><input type="checkbox" checked=${form.start} onChange=${set('start')} />Start after creating</label>
         <span class="spacer"></span>
